@@ -683,7 +683,7 @@ const PRESETS=[
           {pkName:'舒芙蕾打包盒',qty:1},{pkName:'一次性勺子',qty:1},
           {pkName:'打包袋',qty:1},{pkName:'100ml小料盒',qty:1}
         ],
-        price:0, dprice:0, comm:0, scomm:0
+        price:null, dprice:null, comm:null, scomm:null
       }
     ]
   }
@@ -737,8 +737,8 @@ function applyPresetData(preset){
     const compLines=(p.components||[]).map(l=>{const id=compMap[l.compName];return id?{compId:id,qty:Number(l.qty)||1}:null;}).filter(Boolean);
     products.push({
       id:newId,name:p.name,cat:p.cat||'其他',date:p.date||'',status:'',
-      lines:[...lines,...packLines],compLines:compLines,price:p.price||0,dprice:p.dprice||0,
-      comm:p.comm||0,scomm:p.scomm||0
+      lines:[...lines,...packLines],compLines:compLines,price:p.price==null?null:p.price,dprice:p.dprice==null?null:p.dprice,
+      comm:p.comm==null?null:p.comm,scomm:p.scomm==null?null:p.scomm
     });
     nProd++;
   });
@@ -787,8 +787,8 @@ function buildFormula1Preset(raw){
     name:p.name, cat:p.cat||'其他', date:p.date||'',
     lines:(p.ingredients||[]).map(x=>({ingName:x.name, qty:Number(x.qty)||0})),
     packLines:(p.packs||[]).map(x=>({pkName:x.name, qty:Number(x.qty)||0})),
-    price:Number(p.price)||0, dprice:Number(p.dprice)||0,
-    comm:Number(p.comm)||0, scomm:Number(p.scomm)||0
+    price:p.price==null?null:Number(p.price), dprice:p.dprice==null?null:Number(p.dprice),
+    comm:p.comm==null?null:Number(p.comm), scomm:p.scomm==null?null:Number(p.scomm)
   }));
   return {id:'formula1', name:'公式1导入数据', desc:'', ingredients, packs, products};
 }
@@ -852,8 +852,8 @@ function buildFormula2Preset(raw){
     name:p.name, cat:p.cat||'其他', date:p.date||'',
     components:(p.components||[]).map(x=>({compName:x.name, qty:Number(x.qty)||1})),
     packLines:(p.packs||[]).map(x=>({pkName:x.name, qty:Number(x.qty)||0})),
-    price:Number(p.price)||0, dprice:Number(p.dprice)||0,
-    comm:Number(p.comm)||0, scomm:Number(p.scomm)||0
+    price:p.price==null?null:Number(p.price), dprice:p.dprice==null?null:Number(p.dprice),
+    comm:p.comm==null?null:Number(p.comm), scomm:p.scomm==null?null:Number(p.scomm)
   }));
   return {id:'formula2', name:'公式2导入数据', desc:'', ingredients, packs, components, products};
 }
@@ -1499,7 +1499,7 @@ $('#prod-add').onclick=()=>{
   if(!draftCompLines.length && !draftLines.length){showToast('请先点「🧩 选择配料」或「📦 添加包材」选择组成单品的内容');return;}
   const id=(products.reduce((m,x)=>Math.max(m,x.id),0)||0)+1;
   const date=$('#prod-date').value||'';
-  products.push({id,name,cat,lines:draftLines.slice(),compLines:draftCompLines.slice(),price:0,dprice:0,comm:0.2,scomm:0.2,
+  products.push({id,name,cat,lines:draftLines.slice(),compLines:draftCompLines.slice(),price:null,dprice:null,comm:null,scomm:null,
     date,status:'active'});
   save();renderProducts();renderShop();
   $('#prod-name').value='';
@@ -1736,8 +1736,10 @@ function renderProfit(){
       p.marginNotes[f.replace('margin-','')]=inp.value;
       save();return;
     }
-    const v=parseFloat(inp.value)||0;
-    if(f==='comm'){p.comm=v/100;}else if(f==='scomm'){p.scomm=v/100;}else{p[f]=v;}
+    const raw=inp.value.trim();
+    const parsed=parseFloat(raw);
+    const v=(raw===''||Number.isNaN(parsed))?null:parsed;
+    if(f==='comm'){p.comm=v==null?null:v/100;}else if(f==='scomm'){p.scomm=v==null?null:v/100;}else{p[f]=v;}
     save();updateProfitRow(p);
   });
   // 美团/闪购统一扣点框默认空白，不预填
