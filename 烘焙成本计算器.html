@@ -1463,7 +1463,21 @@ renderIngredients();renderProducts();renderBin();renderProfit();renderShop();ren
 
 /* ---------- PWA：注册 service worker，支持「添加到主屏幕 / 安装」 ---------- */
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js')
+      .then(reg=>{
+        // 检测到新版本 service worker 时自动刷新一次，确保用户立即用到最新代码
+        reg.addEventListener('updatefound',()=>{
+          const newSw=reg.installing;
+          newSw.addEventListener('statechange',()=>{
+            if(newSw.state==='activated' && navigator.serviceWorker.controller){
+              window.location.reload();
+            }
+          });
+        });
+      })
+      .catch(()=>{});
+  });
 }
 </script>
 </body>

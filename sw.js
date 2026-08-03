@@ -1,5 +1,6 @@
 /* 最小离线缓存 service worker：让「添加到主屏幕」后的应用可离线使用 */
-const CACHE = 'bakery-cost-v1';
+/* 更新策略：联网时优先从网络拉最新版，同时更新缓存；离线时才用缓存 */
+const CACHE = 'bakery-cost-v2';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
   './app-icon-192.png', './app-icon-512.png', './apple-touch-icon.png'
@@ -20,12 +21,16 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    caches.match(e.request).then(hit =>
-      hit || fetch(e.request).then(resp => {
+    fetch(e.request)
+      .then(resp => {
+        // 网络可用：返回最新响应并更新缓存
         const cp = resp.clone();
         caches.open(CACHE).then(c => c.put(e.request, cp));
         return resp;
-      }).catch(() => caches.match('./index.html'))
-    )
+      })
+      .catch(() => {
+        // 离线：回退缓存
+        return caches.match(e.request).then(hit => hit || caches.match('./index.html'));
+      })
   );
 });
