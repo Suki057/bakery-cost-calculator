@@ -593,7 +593,7 @@ function unitPricePerG(i){                                // 单价(元/g)=进�
 }
 /* 单价显示格式：保留3位小数，第4位非0则进1（0舍1入/向上取整） */
 function fmtPrice(val){
-  return Math.ceil(val*1000)/1000;
+  return Math.ceil(val*10000)/10000;
 }
 function lineCost(line){                                   // 单份成本=用量(克)×单价(元/g)
   const i=ingById(line.ingId);
