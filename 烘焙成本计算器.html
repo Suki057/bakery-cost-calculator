@@ -87,7 +87,7 @@
   .pcinfo{font-size:12px;color:var(--muted);margin-bottom:10px}
   .recipe-title{font-weight:600;color:var(--brand-d);font-size:13px;margin-bottom:8px}
   .recipe-details{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:8px}
-  .recipe-details summary{cursor:pointer;font-weight:600;color:var(--brand-d);font-size:13px;list-style:none;padding:10px 14px;background:#faf4ea;border-radius:11px;user-select:none}
+  .recipe-details summary{cursor:pointer;font-weight:600;color:var(--brand-d);font-size:13px;list-style:none;padding:10px 14px;background:#faf4ea;border-radius:11px;user-select:none;display:flex;justify-content:space-between;align-items:center}
   .recipe-details summary::-webkit-details-marker{display:none}
   .recipe-details summary:before{content:"▸ ";transition:transform .2s}
   .recipe-details[open] summary:before{content:"▾ "}
@@ -1009,6 +1009,13 @@ function productCost(p){
   const fromComp=(p.compLines||[]).reduce((s,l)=>{const c=compById(l.compId);return s+(c?componentCost(c)*l.qty:0);},0);
   return fromIng+fromComp;
 }
+function productCompCost(p){
+  return (p.compLines||[]).reduce((s,l)=>{const c=compById(l.compId);return s+(c?componentCost(c)*l.qty:0);},0);
+}
+function productPackCost(p){
+  return (p.lines||[]).reduce((s,l)=>{const i=ingById(l.ingId);return s+(i&&i.type==='pack'?lineCost(l):0);},0);
+}
+function productPackLines(p){return (p.lines||[]).filter(l=>{const i=ingById(l.ingId);return i&&i.type==='pack';});}
 function productWeight(p){
   const fromIng=(p.lines||[]).reduce((s,l)=>{const i=ingById(l.ingId);return s+(i?l.qty*massFactor(i.unit):0);},0);
   const fromComp=(p.compLines||[]).reduce((s,l)=>{const c=compById(l.compId);return s+(c?componentWeight(c)*l.qty:0);},0);
@@ -1408,20 +1415,21 @@ function renderProducts(){
     card.className='card';card.style.marginBottom='12px';
     const compHtml=(p.compLines&&p.compLines.length)?`
       <details class="recipe-details">
-        <summary>配料配比（${p.compLines.length}）</summary>
+        <summary>配料配比（${p.compLines.length}）<span class="muted" style="font-weight:400">成本 ${fmtCost(productCompCost(p))} 元</span></summary>
         <div id="comps-${p.id}" class="lines"></div>
         <div class="addline"><button class="btn sm" data-act="addcomp" data-id="${p.id}">＋ 加配料配比</button></div>
       </details>`:'';
-    const ingHtml=(p.lines&&p.lines.length)?`
+    const packLines=productPackLines(p);
+    const ingHtml=(packLines.length)?`
       <details class="recipe-details">
-        <summary>食材明细</summary>
+        <summary>包材使用（${packLines.length}）<span class="muted" style="font-weight:400">成本 ${fmtCost(productPackCost(p))} 元</span></summary>
         <div class="recipebox">
           <div id="lines-${p.id}" class="lines"></div>
           <div class="addline">
-            <select id="newing-${p.id}"><option value="">＋ 选择食材…</option>
-              ${ingredients.map(i=>`<option value="${i.id}">${i.name}（${fmtPrice(unitPricePerG(i))} 元/g）</option>`).join('')}
+            <select id="newing-${p.id}"><option value="">＋ 选择包材…</option>
+              ${ingredients.filter(i=>i.type==='pack').map(i=>`<option value="${i.id}">${i.name}（${fmtPrice(unitPricePerG(i))} 元/个）</option>`).join('')}
             </select>
-            <input id="newqty-${p.id}" type="number" min="0" step="any" placeholder="用量(同单位)">
+            <input id="newqty-${p.id}" type="number" min="0" step="any" placeholder="数量(同单位)">
             <button class="btn sm" data-act="addline" data-id="${p.id}">添加</button>
           </div>
         </div>
@@ -1459,16 +1467,17 @@ function renderProducts(){
       });
       card.querySelector('[data-act="addcomp"]').onclick=()=>openCompModal({type:'product',id:p.id});
     }
-    /* 旧食材明细 section */
-    if(p.lines&&p.lines.length){
+    /* 包材使用 section */
+    if(packLines.length){
       const lb=$('#lines-'+p.id);
       p.lines.forEach((l,idx)=>{
         const ing=ingById(l.ingId);
+        if(!ing || ing.type!=='pack') return;
         const row=document.createElement('div');row.className='lineitem';
         row.innerHTML=`
-          <div class="liname">${ing?ing.name:'<i>已删除食材</i>'} <span class="muted">(${ing?fmtPrice(unitPricePerG(ing))+' 元/g · 成本 '+fmtCost(lineCost(l))+' 元':'—'})</span></div>
+          <div class="liname">${ing.name} <span class="muted">(${fmtPrice(unitPricePerG(ing))} 元/个 · 成本 ${fmtCost(lineCost(l))} 元)</span></div>
           <div class="lirow">
-            <div class="liqty"><span class="muted">用量</span><input type="number" min="0" step="any" value="${l.qty}" data-id="${p.id}" data-idx="${idx}" class="lineqty"></div>
+            <div class="liqty"><span class="muted">数量</span><input type="number" min="0" step="any" value="${l.qty}" data-id="${p.id}" data-idx="${idx}" class="lineqty"></div>
             <button class="delx" data-act="delline" data-id="${p.id}" data-idx="${idx}">✕</button>
           </div>`;
         lb.appendChild(row);
