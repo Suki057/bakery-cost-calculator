@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="烘焙成本">
+<meta name="theme-color" content="#fbf7f0">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="app-icon-192.png">
+<title>烘焙店成本核算器</title>
+<style>
+  :root{
+    --bg:#fbf7f0; --panel:#fffdf9; --ink:#3a2f25; --muted:#8a7d6d;
+    --line:#ece2d4; --brand:#e8a04b; --brand-d:#cf852f; --accent:#7c9a6b;
+    --danger:#d9694e; --chip:#f3e9da; --shadow:0 6px 20px rgba(120,90,50,.10);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55}
+  header{background:linear-gradient(120deg,#f6c177,#e8a04b);color:#3a2f25;padding:18px 24px;
+    box-shadow:var(--shadow);display:flex;align-items:center;gap:12px}
+  header h1{font-size:19px;margin:0;font-weight:700}
+  header .sub{font-size:12px;opacity:.8}
+  .spacer{flex:1}
+  .wrap{max-width:1080px;margin:0 auto;padding:20px 18px 60px}
+  .tabs{display:flex;gap:8px;margin:6px 0 18px;flex-wrap:wrap}
+  .tab{padding:9px 16px;border:1px solid var(--line);background:var(--panel);border-radius:10px;
+    cursor:pointer;color:var(--muted);font-weight:600;user-select:none;transition:.15s}
+  .tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .panel{display:none}
+  .panel.active{display:block;animation:fade .2s}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;
+    box-shadow:var(--shadow);margin-bottom:16px}
+  .card h2{margin:0 0 12px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .card h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--brand)}
+  .grid{display:grid;gap:10px}
+  .cols-4{grid-template-columns:1.6fr 1fr 1fr 1fr}
+  .cols-3{grid-template-columns:1.6fr 1fr 1fr}
+  .cols-5{grid-template-columns:1.5fr 1fr 1fr 1fr .9fr}
+  .cols-2{grid-template-columns:1fr 1fr}
+  @media(max-width:720px){.cols-4,.cols-3,.cols-5,.cols-2{grid-template-columns:1fr 1fr}}
+  label{font-size:12px;color:var(--muted);display:block;margin-bottom:3px}
+  input,select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;
+    background:#fff;color:var(--ink);font-size:13px;font-family:inherit}
+  input:focus,select:focus{outline:none;border-color:var(--brand)}
+  .row{display:grid;gap:10px;align-items:end;margin-bottom:10px}
+  .btn{padding:9px 16px;border:none;border-radius:10px;background:var(--brand);color:#fff;
+    font-weight:600;cursor:pointer;font-size:13px;transition:.15s;font-family:inherit}
+  .btn:hover{background:var(--brand-d)}
+  .btn.ghost{background:transparent;color:var(--brand-d);border:1px solid var(--brand)}
+  .btn.sm{padding:6px 10px;font-size:12px;border-radius:8px}
+  .btn.danger{background:var(--danger);color:#fff}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:12px;background:#faf4ea}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .tag{display:inline-block;padding:2px 9px;border-radius:20px;background:var(--chip);color:var(--brand-d);
+    font-size:11px;font-weight:600}
+  .tag.c2{background:#e7f0e2;color:#5d7a4d}.tag.c3{background:#fdeede;color:#c07d2a}
+  .tag.c4{background:#e9e4f5;color:#6a5aa0}.tag.c5{background:#fde4e0;color:#c0523c}
+  .muted{color:var(--muted)}
+  .totbar{display:flex;gap:14px;flex-wrap:wrap;margin:12px 0 4px}
+  .stat{flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:14px 16px;box-shadow:var(--shadow)}
+  .stat .k{font-size:12px;color:var(--muted)}
+  .stat .v{font-size:22px;font-weight:800;color:var(--brand-d);font-variant-numeric:tabular-nums;margin-top:3px}
+  .stat.good .v{color:var(--accent)}
+  .stat.bad .v{color:var(--danger)}
+  .bar{height:14px;border-radius:8px;background:linear-gradient(90deg,#f6c177,#e8a04b);min-width:2px}
+  .barwrap{display:flex;align-items:center;gap:10px;margin:6px 0}
+  .barwrap .name{width:120px;font-size:12px;color:var(--ink)}
+  .barwrap .val{width:110px;text-align:right;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .empty{padding:24px;text-align:center;color:var(--muted);font-size:13px}
+  .delx{background:none;border:none;color:var(--danger);cursor:pointer;font-size:15px;line-height:1}
+  .pchead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px}
+  .pcname{display:flex;align-items:center;gap:8px}
+  .pcinfo{font-size:12px;color:var(--muted);margin-bottom:10px}
+  .recipe-title{font-weight:600;color:var(--brand-d);font-size:13px;margin-bottom:8px}
+  .recipe-details{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:8px}
+  .recipe-details summary{cursor:pointer;font-weight:600;color:var(--brand-d);font-size:13px;list-style:none;padding:10px 14px;background:#faf4ea;border-radius:11px;user-select:none}
+  .recipe-details summary::-webkit-details-marker{display:none}
+  .recipe-details summary:before{content:"▸ ";transition:transform .2s}
+  .recipe-details[open] summary:before{content:"▾ "}
+  .recipe-details[open] summary{border-radius:11px 11px 0 0;border-bottom:1px solid var(--line)}
+  .recipe-details[open] .recipebox{border:none;border-radius:0 0 11px 11px}
+  /* 组成部分库：食材与用量可收缩 */
+  .comp-details{border:1px solid var(--line);border-radius:11px;overflow:hidden;background:#fff;margin-top:6px}
+  .comp-details summary{cursor:pointer;font-weight:600;color:var(--brand-d);font-size:13px;list-style:none;padding:10px 14px;background:#faf4ea;user-select:none}
+  .comp-details summary::-webkit-details-marker{display:none}
+  .comp-details summary:before{content:"▸ "}
+  .comp-details[open] summary:before{content:"▾ "}
+  .comp-details[open] summary{border-bottom:1px solid var(--line)}
+  .comp-details .lines,.comp-details .addline{padding:10px 14px}
+  .compedit-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:13px}
+  .modal-lines{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+  .lines{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+  .lineitem{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .liname{font-size:13px}
+  .lirow{display:flex;align-items:center;gap:8px}
+  .liqty{display:flex;align-items:center;gap:6px;flex:1}
+  .liqty input{width:90px}
+  .addline{display:grid;grid-template-columns:1.6fr 1fr auto;gap:8px;align-items:end}
+  .hint{font-size:12px;color:var(--muted);background:#faf4ea;border-left:3px solid var(--brand);
+    padding:8px 12px;border-radius:8px;margin-top:8px}
+  .recipebox{border:1px dashed var(--line);border-radius:12px;padding:12px;margin-top:10px;background:#fcf8f1}
+  details summary{cursor:pointer;font-weight:600;color:var(--brand-d);font-size:13px;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary:before{content:"▸ ";}
+  details[open] summary:before{content:"▾ ";}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .search{flex:1;min-width:180px}
+  .pinput{width:96px !important;text-align:right;display:inline-block}
+  .tinput{width:92px;border:1px solid var(--line);border-radius:8px;padding:4px 8px;
+    font-size:16px;font-weight:800;color:var(--brand-d);text-align:right;
+    font-variant-numeric:tabular-nums;background:#fff;font-family:inherit}
+  .tinput:focus{outline:none;border-color:var(--brand)}
+  /* 店铺单品：统一紧凑行（与下架板块同尺寸） */
+  .blist{}
+  #shop-list{margin-top:24px}
+  #shop-list > .card{margin-bottom:24px}
+  .shoprow .sr-name .fire{cursor:pointer;user-select:none;font-size:17px;line-height:1}
+  .shoprow{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+  .shoprow:first-child{border-top:none}
+  .shoprow .sr-main{flex:1;min-width:0}
+  .shoprow .sr-name{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .shoprow .sr-meta{font-size:12px;color:var(--muted);margin-top:3px;
+    font-variant-numeric:tabular-nums}
+  .shoprow .sr-op{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .shoprow .sr-op .btn{font-size:12px;padding:6px 10px;border-radius:8px}
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(58,47,37,.45);display:none;align-items:center;
+    justify-content:center;z-index:50;padding:16px}
+  .modal.active{display:flex}
+  .modal-box{background:var(--panel);border-radius:16px;width:min(540px,100%);max-height:88vh;
+    overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+  .modal-head{padding:15px 18px;border-bottom:1px solid var(--line);font-weight:700;font-size:15px;
+    display:flex;justify-content:space-between;align-items:center}
+  .modal-body{padding:16px 18px}
+  .modal-foot{padding:14px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
+  .modal-lines{margin-bottom:12px}
+  .modal-cal{margin:10px 0 4px;font-size:13px;color:#444;background:#f6f8fa;padding:8px 10px;border-radius:8px}
+  .modal-line{display:flex;justify-content:space-between;align-items:center;padding:9px 11px;
+    background:#fcf8f1;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px}
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(8px);
+    background:#3a2f25;color:#fff;padding:10px 18px;border-radius:24px;font-size:13px;
+    box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:99;opacity:0;transition:.25s;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .ing-type-btn.sel{box-shadow:0 0 0 3px var(--brand-d);outline:none}
+  #ing-type-chip{padding:2px 10px;border-radius:20px}
+</style>
+</head>
+<body>
+<header>
+  <div style="font-size:24px">🥐</div>
+  <div>
+    <h1>烘焙店成本核算器</h1>
+    <div class="sub">录入食材 / 包材进货单价与用量 · 自动算出每个单品与分类的成本 / 利润</div>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn danger sm" id="clear-all">🗑 清空全部数据</button>
+</header>
+
+<div class="wrap">
+  <div class="tabs">
+    <div class="tab active" data-tab="shop">① 店铺单品</div>
+    <div class="tab" data-tab="ing">② 进货清单</div>
+    <div class="tab" data-tab="prod">③ 单品配方</div>
+    <div class="tab" data-tab="comp">④ 组成部分</div>
+    <div class="tab" data-tab="profit">⑤ 利润率</div>
+    <div class="tab" data-tab="bin">⑥ 回收站</div>
+    <div class="tab" data-tab="off">⑦ 产品下架</div>
+  </div>
+
+  <!-- ============ 店铺单品 ============ -->
+  <section class="panel active" id="panel-shop">
+    <div class="card">
+      <h2><span class="dot"></span>店铺单品 <span class="muted" id="shop-count" style="font-weight:400"></span></h2>
+      <div class="hint">这里按「分类」展示在售单品。热销单品会在名称前显示 🔥（双击 🔥 即可取消热销）。点「下架」后单品自动流到「⑦ 产品下架」，不在本页显示。数据由「② 进货清单 + ③ 单品配方」自动计算。在「③ 单品配方」里可标记热销 / 下架。</div>
+      <div id="shop-list"></div>
+      <div class="empty" id="shop-empty" style="display:none">还没有任何单品。去「③ 单品配方」添加单品即可。</div>
+    </div>
+  </section>
+
+  <!-- ============ 产品下架 ============ -->
+  <section class="panel" id="panel-off">
+    <div class="card">
+      <h2><span class="dot"></span>数据保存</h2>
+      <div class="hint">点击「导出保存」把软件内的全部数据（进货清单、单品配方、下架产品、利润率记录）导出成一个文件存到手机；点击「导入恢复」选择该文件，软件会自动摄取并合并其中与软件相关的数据。</div>
+      <div class="row" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+        <button class="btn primary" id="btn-export">⬇ 导出保存</button>
+        <button class="btn" id="btn-import">⬆ 导入恢复</button>
+        <input type="file" id="file-import" accept="application/json,.json" style="display:none">
+      </div>
+      <div class="hint" id="io-info" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <h2><span class="dot"></span>产品下架 <span class="muted" id="off-count" style="font-weight:400"></span></h2>
+      <div class="hint">在这里下架的单品不会被删除，可随时「恢复」回到店铺单品继续在售。下架后不再计入在售统计。</div>
+      <div id="off-list"></div>
+      <div class="empty" id="off-empty" style="display:none">还没有下架的产品。</div>
+    </div>
+  </section>
+
+  <!-- ============ 食材库 ============ -->
+  <section class="panel" id="panel-ing">
+    <div class="card">
+      <h2><span class="dot"></span>添加 / 编辑（食材 · 包材）</h2>
+      <div class="hint">填「食材/包材名称 + 进货单价 + 单份重量(默认g) + 单位」。先点名称框选「食材 / 包材」分类，再填名称；下方清单会自动算出 <b>单价(元/g)=进货单价÷单份重量</b>，配方成本即按用量×此单价累计。</div>
+      <div class="hint" style="margin-top:4px">「100g 热量(kJ) / 100g 脂肪(g)」按营养标签惯例填<b>每 100g（或每 100ml）</b>的数值；清单里热量会自动换算成 kcal（÷4.18），制作配方时再按用量累计成单品的 kcal 与脂肪。</div>
+      <div class="grid cols-4" style="margin-top:12px">
+        <div><label>食材/包材名称</label><input id="ing-name" placeholder="如：高筋面粉 / 打包盒"></div>
+        <div><label>进货单价（元）</label><input id="ing-cost" type="number" min="0" step="any" placeholder="如：8（每kg）"></div>
+        <div><label>单份重量</label><input id="ing-qty" type="number" min="0" step="any" placeholder="如：500（g）"></div>
+        <div><label>单位</label>
+          <select id="ing-unit">
+            <option>kg</option><option selected>g</option><option>个</option><option>袋</option>
+            <option>盒</option><option>瓶</option><option>ml</option><option>L</option><option>份</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:12px;color:var(--muted)">条目分类：<span id="ing-type-chip" class="tag" style="cursor:pointer">未选择（点击名称框）</span></div>
+      <div class="grid cols-3" style="margin-top:10px">
+        <div><label>100g 热量(kJ)</label><input id="ing-kj" type="number" min="0" step="any" placeholder="如：1460（每100g）"></div>
+        <div><label>100g 脂肪(g)</label><input id="ing-fat" type="number" min="0" step="any" placeholder="如：8（每100g）"></div>
+        <div><label>&nbsp;</label><button class="btn" id="ing-add">＋ 添加</button></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>食材清单 <span class="muted" id="ing-count-food" style="font-weight:400"></span></h2>
+      <table>
+        <thead><tr>
+          <th>食材</th>
+          <th class="num">热量(kcal)</th><th class="num">脂肪(g)</th>
+          <th class="num">单价(元/g)</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="ing-body-food"></tbody>
+      </table>
+      <div class="empty" id="ing-empty-food" style="display:none">还没有食材，先在上面添加吧。</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>包材清单 <span class="muted" id="ing-count-pack" style="font-weight:400"></span></h2>
+      <table>
+        <thead><tr>
+          <th>包材</th>
+          <th class="num">热量(kcal)</th><th class="num">脂肪(g)</th>
+          <th class="num">单价(元/g)</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="ing-body-pack"></tbody>
+      </table>
+      <div class="empty" id="ing-empty-pack" style="display:none">还没有包材，先在上面「食材/包材名称」处选「包材」分类后添加。</div>
+    </div>
+  </section>
+
+  <!-- ============ 单品配方 ============ -->
+  <section class="panel" id="panel-prod">
+    <div class="card">
+      <h2><span class="dot"></span>新建单品</h2>
+      <div><label>创建日期(年月)</label><input id="prod-date" type="month" value="2026-08"></div>
+      <div class="grid cols-2" style="margin-top:10px">
+        <div><label>单品名称</label><input id="prod-name" placeholder="如：原味舒芙蕾"></div>
+        <div><label>分类</label>
+          <select id="prod-cat">
+            <option>热压三明治</option><option>奶茶柠檬茶</option><option selected>舒芙蕾</option>
+            <option>燕麦雪饼</option><option>其他</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid cols-2" style="margin-top:10px">
+        <div><label>&nbsp;</label><button class="btn ghost" id="comp-pick">🧩 选择组成部分</button></div>
+        <div><label>&nbsp;</label><button class="btn" id="ing-pick">📦 添加包材库</button></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:12px">
+        <button class="btn" id="prod-add">✓ 确认添加</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>单品与配方 <span class="muted" id="prod-count" style="font-weight:400"></span></h2>
+      <div class="toolbar"><input class="search" id="prod-search" placeholder="🔍 搜索单品名称 / 分类"></div>
+      <div id="prod-list"></div>
+      <div class="empty" id="prod-empty" style="display:none">还没有单品，先在上面新建一个，再点「制作配方」加入食材。</div>
+    </div>
+  </section>
+
+  <!-- ============ 组成部分 ============ -->
+  <section class="panel" id="panel-comp">
+    <div class="card">
+      <h2><span class="dot"></span>新建组成部分</h2>
+      <div class="hint">组成部分是「单品」的拼装单元，例如一个舒芙蕾 = 舒芙蕾胚 + 奶盖 + 小料 + 勺子 + 打包盒。在这里先建好每个部分，并填好它使用的<b>食材与用量</b>；之后在「③ 单品配方」里只要多选这些部分（可填数量）即可组成单品，无需再一个个选食材。</div>
+      <div class="grid cols-2" style="margin-top:12px">
+        <div><label>组成部分名称</label><input id="comp-name" placeholder="如：舒芙蕾胚"></div>
+        <div><label>&nbsp;</label><button class="btn" id="comp-add">＋ 添加组成部分</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2><span class="dot"></span>组成部分库 <span class="muted" id="comp-count" style="font-weight:400"></span></h2>
+      <div id="comp-list"></div>
+      <div class="empty" id="comp-empty" style="display:none">还没有组成部分，先在上面添加一个。</div>
+    </div>
+  </section>
+
+  <!-- ============ 利润率（堂食 / 外卖） ============ -->
+  <section class="panel" id="panel-profit">
+    <div class="card">
+      <h2><span class="dot"></span>堂食 · 利润</h2>
+      <div class="hint">「定价」填你店里卖的价格，成本自动来自配方；利润 = 定价 − 成本，利润率 = 利润 ÷ 定价。直接改表格里的定价即可实时计算。</div>
+      <div class="toolbar" style="align-items:center">
+        <span class="muted">日期：</span><input id="dine-date" type="text" style="width:140px" placeholder="如 2026-08-02">
+        <span class="muted" style="margin-left:10px">备注：</span><input id="dine-note" type="text" style="flex:1;min-width:120px" placeholder="可选填">
+        <span class="muted" style="margin-left:10px">当日营收(元)：</span><input id="dine-manual-total" type="number" min="0" step="any" style="width:100px" placeholder="可选">
+      </div>
+      <table>
+        <thead><tr>
+          <th>单品</th><th>分类</th>
+          <th class="num">定价(元)</th><th class="num">单份成本</th>
+          <th class="num">利润</th><th class="num">利润率</th>
+        </tr></thead>
+        <tbody id="dine-body"></tbody>
+      </table>
+      <div class="empty" id="dine-empty" style="display:none">还没有单品，先到「② 单品配方」添加。</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>美团 · 利润</h2>
+      <div class="hint">美团要扣平台服务费（定价 × 扣点）；利润 = 定价 − 平台服务费 − 成本，利润率 = 利润 ÷ 定价。</div>
+      <div class="toolbar" style="align-items:center">
+        <span class="muted">美团统一扣点：</span>
+        <input id="global-comm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%（改这里一次性设置所有美团单品的平台扣点，公式不变）</span>
+      </div>
+      <div class="toolbar" style="align-items:center">
+        <span class="muted">日期：</span><input id="del-date" type="text" style="width:140px" placeholder="如 2026-08-02">
+        <span class="muted" style="margin-left:10px">备注：</span><input id="del-note" type="text" style="flex:1;min-width:120px" placeholder="可选填">
+        <span class="muted" style="margin-left:10px">当日营收(元)：</span><input id="del-manual-total" type="number" min="0" step="any" style="width:100px" placeholder="可选">
+      </div>
+      <table>
+        <thead><tr>
+          <th>单品</th>
+          <th class="num">定价(元)</th><th class="num">扣点%</th>
+          <th class="num">平台服务费</th><th class="num">单份成本</th>
+          <th class="num">利润</th><th class="num">利润率</th>
+        </tr></thead>
+        <tbody id="del-body"></tbody>
+      </table>
+      <div class="empty" id="del-empty" style="display:none">还没有单品，先到「② 单品配方」添加。</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>闪购 · 利润</h2>
+      <div class="hint">闪购要扣平台服务费（定价 × 扣点）；利润 = 定价 − 平台服务费 − 成本，利润率 = 利润 ÷ 定价。</div>
+      <div class="toolbar" style="align-items:center">
+        <span class="muted">闪购统一扣点：</span>
+        <input id="global-scomm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%（改这里一次性设置所有闪购单品的平台扣点，公式不变）</span>
+      </div>
+      <div class="toolbar" style="align-items:center">
+        <span class="muted">日期：</span><input id="shan-date" type="text" style="width:140px" placeholder="如 2026-08-02">
+        <span class="muted" style="margin-left:10px">备注：</span><input id="shan-note" type="text" style="flex:1;min-width:120px" placeholder="可选填">
+        <span class="muted" style="margin-left:10px">当日营收(元)：</span><input id="shan-manual-total" type="number" min="0" step="any" style="width:100px" placeholder="可选">
+      </div>
+      <table>
+        <thead><tr>
+          <th>单品</th>
+          <th class="num">定价(元)</th><th class="num">扣点%</th>
+          <th class="num">平台服务费</th><th class="num">单份成本</th>
+          <th class="num">利润</th><th class="num">利润率</th>
+        </tr></thead>
+        <tbody id="shan-body"></tbody>
+      </table>
+      <div class="empty" id="shan-empty" style="display:none">还没有单品，先到「② 单品配方」添加。</div>
+    </div>
+  </section>
+
+  <!-- ============ 回收站 ============ -->
+  <section class="panel" id="panel-bin">
+    <div class="card">
+      <h2><span class="dot"></span>回收站 <span class="muted" id="bin-count" style="font-weight:400"></span></h2>
+      <div class="hint">删除的食材 / 单品会先到这里，保留 <b>10 天</b>，到期自动永久清除。可随时「恢复」回原处，或「永久删除」。</div>
+      <div class="toolbar">
+        <div class="spacer"></div>
+        <button class="btn danger" id="bin-empty">🗑 清空回收站</button>
+      </div>
+      <div id="bin-list"></div>
+      <div class="empty" id="bin-empty-msg" style="display:none">回收站是空的。</div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ 配方弹窗 ============ -->
+<div class="modal" id="comp-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span>选择组成部分：<span id="comp-modal-target"></span></span>
+      <span class="delx" id="comp-modal-close" title="关闭">✕</span>
+    </div>
+    <div class="modal-body">
+      <div class="hint" id="comp-modal-note" style="margin-bottom:12px"></div>
+      <div class="modal-lines" id="comp-modal-lines"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="comp-modal-save">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="comp-edit-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span>组成部分食材：<span id="comp-edit-name"></span></span>
+      <span class="delx" id="comp-edit-close" title="关闭">✕</span>
+    </div>
+    <div class="modal-body">
+      <div class="hint" style="margin-bottom:12px">为该组成部分添加使用的食材与用量，点右下角「确定」保存到组成部分库。</div>
+      <div class="modal-lines" id="comp-edit-lines"></div>
+      <div class="addline">
+        <select id="comp-edit-ing"><option value="">＋ 选择食材…</option></select>
+        <input id="comp-edit-qty" type="number" min="0" step="any" placeholder="用量(同单位)">
+        <button class="btn sm" id="comp-edit-add">添加</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" id="comp-edit-cancel">取消</button>
+      <button class="btn primary" id="comp-edit-save">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 食材库选择弹窗 ============ -->
+<div class="modal" id="ing-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span>添加包材库：<span id="ing-modal-target"></span></span>
+      <span class="delx" id="ing-modal-close" title="关闭">✕</span>
+    </div>
+    <div class="modal-body">
+      <div class="hint" id="ing-modal-note" style="margin-bottom:12px"></div>
+      <div class="modal-lines" id="ing-modal-lines"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="ing-modal-save">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 食材/包材 分类选择弹窗 ============ -->
+<div class="modal" id="ing-type-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span>选择分类</span>
+      <span class="delx" id="ing-type-close" title="关闭">✕</span>
+    </div>
+    <div class="modal-body">
+      <div class="hint" style="margin-bottom:12px">请选择该条目的分类（二选一），确定后将返回名称框输入名称：</div>
+      <div style="display:flex;gap:10px">
+        <button class="btn ing-type-btn" id="ing-type-food" style="flex:1;padding:18px 10px;font-size:16px;font-weight:700">🥬 食材</button>
+        <button class="btn ghost ing-type-btn" id="ing-type-pack" style="flex:1;padding:18px 10px;font-size:16px;font-weight:700">📦 包材</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="ing-type-ok">确定</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- 内置示例进货数据（食材 + 包材） ---------- */
+const SEED_STOCK=[];
+function seedIngredients(){
+  return SEED_STOCK.map((s,idx)=>({
+    id:idx+1, name:s.name, qty:s.qty, unit:s.unit,
+    cost:s.cost, kj:0, fat:0, type:s.type
+  }));
+}
+
+/* ---------- 内置示例组成部分（舒芙蕾胚 / 奶盖 / 黑糖珍珠） ---------- */
+const SEED_COMPONENTS=[];
+/* 将名称匹配转为 ingId（依赖 ingredients 已加载） */
+function seedComponents(ingredients){
+  const name2id=new Map();
+  ingredients.forEach(i=>name2id.set(i.name,i.id));
+  let nextId=(components.reduce((m,c)=>Math.max(m,c.id),0)||0);
+  return SEED_COMPONENTS.map(c=>{
+    nextId++;
+    const lines=c.lines
+      .map(l=>{const id=name2id.get(l.ingName);return id?{ingId:id,qty:l.qty}:null;})
+      .filter(Boolean);
+    return{id:nextId,name:c.name,lines};
+  });
+}
+
+
+/* ---------- 存储（版本号触发清空旧示例数据） ---------- */
+const LS_ING='bakery_ingredients', LS_PROD='bakery_products', LS_BIN='bakery_bin', LS_COMP='bakery_components', LS_VER='bakery_ver';
+const APP_VER=2;
+if(localStorage.getItem(LS_VER)!==String(APP_VER)){
+  localStorage.removeItem(LS_ING);localStorage.removeItem(LS_PROD);localStorage.removeItem(LS_BIN);localStorage.removeItem(LS_COMP);
+  localStorage.setItem(LS_VER,String(APP_VER));
+}
+let ingredients=JSON.parse(localStorage.getItem(LS_ING));
+let products=JSON.parse(localStorage.getItem(LS_PROD)||'[]');
+let bin=JSON.parse(localStorage.getItem(LS_BIN)||'[]');
+let components=JSON.parse(localStorage.getItem(LS_COMP)||'[]');
+/* 进货清单为空时，自动填充内置示例数据（食材+包材），仅首次 */
+if((!ingredients||ingredients.length===0) && !localStorage.getItem('bakery_seeded')){
+  ingredients=seedIngredients();
+  localStorage.setItem(LS_ING,JSON.stringify(ingredients));
+  /* 组成部分也一并内置 */
+  components=seedComponents(ingredients);
+  if(components.length){
+    localStorage.setItem(LS_COMP,JSON.stringify(components));
+  }
+  localStorage.setItem('bakery_seeded','1');
+}
+
+/* 回收站自动清除：超过 10 天的项永久删除 */
+const TEN_DAYS=10*24*60*60*1000;
+bin=bin.filter(it=>Date.now()-it.deletedAt<=TEN_DAYS);
+
+function save(){localStorage.setItem(LS_ING,JSON.stringify(ingredients));localStorage.setItem(LS_PROD,JSON.stringify(products));}
+function saveBin(){localStorage.setItem(LS_BIN,JSON.stringify(bin));}
+function saveComponents(){localStorage.setItem(LS_COMP,JSON.stringify(components));}
+function binId(){return Date.now()+Math.floor(Math.random()*10000);}
+
+/* ---------- 数据导出 / 导入 ---------- */
+function collectData(){
+  const meta={};
+  ['dine','del','shan'].forEach(s=>{const k='bakery_'+s+'_meta';meta[s]=localStorage.getItem(k);});
+  return {app:'bakery-cost', ver:APP_VER, exportedAt:new Date().toISOString(),
+          ingredients, products, bin, components, meta};
+}
+function mergeById(existing, imported){
+  if(!Array.isArray(imported))return existing;
+  const map=new Map();
+  existing.forEach(x=>{if(x&&x.id!=null)map.set(String(x.id),x);});
+  imported.forEach(x=>{if(x&&x.id!=null)map.set(String(x.id),x);});
+  return [...map.values()];
+}
+function exportData(){
+  const data=collectData();
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const ts=new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');
+  a.href=url; a.download='烘焙成本数据_'+ts+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  $('#io-info').textContent=`已导出：${ingredients.length} 个食材 / ${products.length} 个单品 / ${bin.length} 个下架项`;
+  showToast('数据已导出保存');
+}
+function importData(file){
+  const reader=new FileReader();
+  reader.onload=()=>{
+    let data;
+    try{data=JSON.parse(reader.result);}catch(e){showToast('文件不是有效的数据文件');return;}
+    if(!data||typeof data!=='object'){showToast('文件格式无法识别');return;}
+    let nIng=0,nProd=0,nBin=0,nComp=0;
+    if(Array.isArray(data.ingredients)){ingredients=mergeById(ingredients,data.ingredients);nIng=data.ingredients.length;}
+    if(Array.isArray(data.products)){products=mergeById(products,data.products);nProd=data.products.length;}
+    if(Array.isArray(data.bin)){bin=mergeById(bin,data.bin);nBin=data.bin.length;}
+    if(Array.isArray(data.components)){components=mergeById(components,data.components);nComp=data.components.length;}
+    if(data.meta&&typeof data.meta==='object'){
+      ['dine','del','shan'].forEach(s=>{const k='bakery_'+s+'_meta';if(data.meta[s]!=null)localStorage.setItem(k,data.meta[s]);});
+    }
+    save();saveBin();
+    renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderOff();renderComponents();updateRecipeStatus();
+    $('#io-info').textContent=`已导入并合并：${nIng} 个食材 / ${nProd} 个单品 / ${nComp} 个组成部分 / ${nBin} 个下架项`;
+    showToast('数据已导入恢复');
+  };
+  reader.onerror=()=>showToast('读取文件失败');
+  reader.readAsText(file);
+}
+
+/* ---------- 工具 ---------- */
+const $=s=>document.querySelector(s);
+const f2=n=>(Math.round((n||0)*100)/100).toFixed(2);
+const yuan=n=>'¥'+f2(n);
+const pct=n=>(Math.round((n||0)*1000)/10).toFixed(1)+'%';
+function ingById(id){return ingredients.find(i=>i.id==id);}
+const KJ2KCAL=4.18;                                       // kJ → kcal（按营养换算惯例）
+function unitPricePerG(i){                                // 单价(元/g)=进货单价÷单份重量
+  if(!i||!(i.qty>0))return 0;
+  return i.cost/(i.qty*massFactor(i.unit));
+}
+/* 单价显示格式：保留3位小数，第4位非0则进1（0舍1入/向上取整） */
+function fmtPrice(val){
+  return Math.ceil(val*1000)/1000;
+}
+function lineCost(line){                                   // 单份成本=用量(克)×单价(元/g)
+  const i=ingById(line.ingId);
+  if(!i)return 0;
+  return line.qty*massFactor(i.unit)*unitPricePerG(i);
+}
+function productCost(p){
+  const fromIng=(p.lines||[]).reduce((s,l)=>s+lineCost(l),0);
+  const fromComp=(p.compLines||[]).reduce((s,l)=>{const c=compById(l.compId);return s+(c?componentCost(c)*l.qty:0);},0);
+  return fromIng+fromComp;
+}
+function productWeight(p){
+  const fromIng=(p.lines||[]).reduce((s,l)=>{const i=ingById(l.ingId);return s+(i?l.qty*massFactor(i.unit):0);},0);
+  const fromComp=(p.compLines||[]).reduce((s,l)=>{const c=compById(l.compId);return s+(c?componentWeight(c)*l.qty:0);},0);
+  return fromIng+fromComp;
+}
+function pPrice(p){return p.price||0;}                       // 堂食定价
+function pDprice(p){return p.dprice||0;}                     // 外卖定价
+function pComm(p){return (p.comm==null)?0.2:p.comm;}         // 美团扣点(默认20%)
+function pScomm(p){return (p.scomm==null)?0.2:p.scomm;}     // 闪购扣点(默认20%)
+/* 食材单位 → 克(或毫升)当量，用于把「每100g/100ml」的营养值换算到实际用量 */
+function massFactor(u){
+  if(u==='kg'||u==='L')return 1000;
+  if(u==='g'||u==='ml')return 1;
+  return 1; // 个/袋/盒/瓶/份 无标准克当量，按 1 处理
+}
+/* 热量/脂肪：食材库「每100g/100ml」数值 ×(用量×单位克当量÷100) 累计；kJ→kcal 系数 KJ2KCAL */
+function lineKj(line){const i=ingById(line.ingId);return i?(i.kj||0)*(line.qty*massFactor(i.unit)/100):0;}   // 单条食材热量(kJ)
+function lineKcal(line){return lineKj(line)/KJ2KCAL;}                                                             // 单条食材热量(kcal)
+function lineFat(line){const i=ingById(line.ingId);return i?(i.fat||0)*(line.qty*massFactor(i.unit)/100):0;}  // 单条食材脂肪(g)
+function productCal(p){
+  const fromIng=(p.lines||[]).reduce((s,l)=>s+lineKcal(l),0);
+  const fromComp=(p.compLines||[]).reduce((s,l)=>{const c=compById(l.compId);return s+(c?componentCal(c)*l.qty:0);},0);
+  return fromIng+fromComp;
+}
+function productFat(p){
+  const fromIng=(p.lines||[]).reduce((s,l)=>s+lineFat(l),0);
+  const fromComp=(p.compLines||[]).reduce((s,l)=>{const c=compById(l.compId);return s+(c?componentFat(c)*l.qty:0);},0);
+  return fromIng+fromComp;
+}
+/* ---------- 组成部分（单品的拼装单元，自身也是食材行集合） ---------- */
+function compById(id){return components.find(c=>c.id==id);}
+function componentCost(c){return (c.lines||[]).reduce((s,l)=>s+lineCost(l),0);}
+function componentWeight(c){return (c.lines||[]).reduce((s,l)=>{const i=ingById(l.ingId);return s+(i?l.qty*massFactor(i.unit):0);},0);}
+function componentCal(c){return (c.lines||[]).reduce((s,l)=>s+lineKcal(l),0);}
+function componentFat(c){return (c.lines||[]).reduce((s,l)=>s+lineFat(l),0);}
+/* 单品使用的食材项数 = 直接食材行数 + 各组成部分的食材行数 */
+function productIngredientCount(p){
+  let n=(p.lines||[]).length;
+  (p.compLines||[]).forEach(l=>{const c=compById(l.compId);n+=(c&&c.lines)?c.lines.length:0;});
+  return n;
+}
+
+/* 轻提示 */
+let toastTimer=null;
+function showToast(msg){
+  const t=$('#toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+/* ---------- Tab 切换 ---------- */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  $('#panel-'+t.dataset.tab).classList.add('active');
+  if(t.dataset.tab==='profit')renderProfit();
+  if(t.dataset.tab==='bin')renderBin();
+  if(t.dataset.tab==='shop')renderShop();
+  if(t.dataset.tab==='off')renderOff();
+  if(t.dataset.tab==='comp')renderComponents();
+});
+
+/* ---------- 食材库 ---------- */
+function renderIngredients(){
+  const food=ingredients.filter(i=>(i.type||'food')==='food');
+  const pack=ingredients.filter(i=>(i.type||'food')==='pack');
+  const tbF=$('#ing-body-food'), tbP=$('#ing-body-pack');
+  tbF.innerHTML='';tbP.innerHTML='';
+  $('#ing-count-food').textContent=food.length?`（共 ${food.length} 种）`:'';
+  $('#ing-count-pack').textContent=pack.length?`（共 ${pack.length} 种）`:'';
+  $('#ing-empty-food').style.display=food.length?'none':'block';
+  $('#ing-empty-pack').style.display=pack.length?'none':'block';
+  const mkRow=(i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><b>${i.name}</b></td>
+      <td class="num">${Math.round((i.kj||0)/KJ2KCAL)}</td>
+      <td class="num">${i.fat||0}</td>
+      <td class="num">${fmtPrice(unitPricePerG(i))}</td>
+      <td style="text-align:right"><button class="delx" title="删除">✕</button></td>`;
+    tr.querySelector('.delx').onclick=()=>deleteIngredient(i);
+    return tr;
+  };
+  food.forEach(i=>tbF.appendChild(mkRow(i)));
+  pack.forEach(i=>tbP.appendChild(mkRow(i)));
+}
+$('#ing-add').onclick=()=>{
+  if(pendingIngType===null){showToast('请先点「食材/包材名称」框选择分类（食材 / 包材）');return;}
+  const name=$('#ing-name').value.trim();
+  const qty=parseFloat($('#ing-qty').value);
+  const unit=$('#ing-unit').value;
+  const cost=parseFloat($('#ing-cost').value);
+  const kj=parseFloat($('#ing-kj').value)||0;
+  const fat=parseFloat($('#ing-fat').value)||0;
+  if(!name||!(qty>0)||!(cost>=0)){showToast('请填好 名称 / 单份重量(>0) / 进货单价');return;}
+  const id=(ingredients.reduce((m,x)=>Math.max(m,x.id),0)||0)+1;
+  ingredients.push({id,name,qty,unit,cost,kj,fat,type:pendingIngType});
+  save();renderIngredients();
+  $('#ing-name').value='';$('#ing-qty').value='';$('#ing-cost').value='';$('#ing-kj').value='';$('#ing-fat').value='';
+  pendingIngType=null;ingTypeChosen=null;updateTypeChip();
+};
+
+/* 删除食材 → 进回收站（保留配方中的引用，恢复后可正常计算） */
+function deleteIngredient(i){
+  bin.push({id:binId(),type:'ingredient',data:{...i},deletedAt:Date.now()});
+  ingredients=ingredients.filter(x=>x.id!=i.id);
+  save();saveBin();renderIngredients();renderProducts();renderBin();
+  showToast(`「${i.name}」已删除，可到「⑤ 回收站」恢复`);
+}
+
+/* ---------- 食材/包材 分类选择（点名称框触发） ---------- */
+let pendingIngType=null;     // 当前待添加的条目分类：'food' / 'pack'
+let ingTypeChosen=null;      // 弹窗中临时选中的分类
+function updateTypeChip(){
+  const chip=$('#ing-type-chip');if(!chip)return;
+  if(pendingIngType==='food'){chip.textContent='🥬 食材';chip.className='tag c2';}
+  else if(pendingIngType==='pack'){chip.textContent='📦 包材';chip.className='tag c3';}
+  else {chip.textContent='未选择（点击名称框）';chip.className='tag';}
+  chip.style.cursor='pointer';
+}
+function openIngTypeModal(){
+  ingTypeChosen=null;
+  $('#ing-type-food').classList.remove('sel');
+  $('#ing-type-pack').classList.remove('sel');
+  $('#ing-type-modal').classList.add('active');
+}
+$('#ing-name').addEventListener('focus',()=>{
+  if(pendingIngType===null && !$('#ing-type-modal').classList.contains('active')) openIngTypeModal();
+});
+$('#ing-type-chip').onclick=openIngTypeModal;
+$('#ing-type-food').onclick=()=>{ingTypeChosen='food';$('#ing-type-food').classList.add('sel');$('#ing-type-pack').classList.remove('sel');};
+$('#ing-type-pack').onclick=()=>{ingTypeChosen='pack';$('#ing-type-pack').classList.add('sel');$('#ing-type-food').classList.remove('sel');};
+$('#ing-type-close').onclick=()=>$('#ing-type-modal').classList.remove('active');
+$('#ing-type-ok').onclick=()=>{
+  if(!ingTypeChosen){showToast('请选择分类（食材 / 包材）');return;}
+  pendingIngType=ingTypeChosen;
+  $('#ing-type-modal').classList.remove('active');
+  updateTypeChip();
+  $('#ing-name').focus();
+};
+
+/* ---------- 单品配方：组成部分选择（弹窗） ---------- */
+let draftCompLines=[];   // 新建单品时，弹窗里已选的组成部分（尚未提交）
+let draftLines=[];       // 新建单品时，弹窗里已选的食材（尚未提交）
+let compModalTarget=null; // {type:'new'} 或 {type:'product',id}
+
+/* 组成部分选择弹窗：列出所有组成部分，勾选并设置数量 */
+function openCompModal(target){
+  compModalTarget=target;
+  const cur = target.type==='product'
+    ? (products.find(x=>x.id==target.id)?.compLines||[])
+    : draftCompLines;
+  const map=new Map(); cur.forEach(l=>map.set(String(l.compId),l.qty));
+  $('#comp-modal-target').textContent = target.type==='product'
+    ? (products.find(x=>x.id==target.id)?.name||'')
+    : ($('#prod-name').value.trim()||'新建单品');
+  const box=$('#comp-modal-lines');box.innerHTML='';
+  $('#comp-modal-note').textContent='勾选组成单品的部分，并在「数量」里填使用个数（默认 1，如用 2 个勺子）。';
+  if(!components.length){
+    box.innerHTML='<div class="muted" style="font-size:12px;padding:4px 0">还没有组成部分，请先到「④ 组成部分」里建好（如舒芙蕾胚、奶盖、小料、勺子、打包盒）。</div>';
+  }else{
+    components.forEach(c=>{
+      const qty=map.get(String(c.id))||0;
+      const div=document.createElement('div');div.className='modal-line';
+      div.innerHTML=`<label style="display:flex;align-items:center;gap:8px;flex:1;cursor:pointer">
+          <input type="checkbox" class="cmpick" data-id="${c.id}" ${qty>0?'checked':''}>
+          <span><b>${c.name}</b> <span class="muted">${yuan(componentCost(c))} · ${Math.round(componentWeight(c))}g</span></span>
+        </label>
+        <span class="muted">数量</span>
+        <input type="number" min="0" step="any" value="${qty>0?qty:1}" class="compqty" data-id="${c.id}" style="width:72px" ${qty>0?'':'disabled'}>`;
+      const chk=div.querySelector('.cmpick');
+      const qin=div.querySelector('.compqty');
+      chk.onchange=()=>{ qin.disabled=!chk.checked; if(chk.checked && !qin.value) qin.value=1; };
+      box.appendChild(div);
+    });
+  }
+  $('#comp-modal').classList.add('active');
+}
+$('#comp-modal-close').onclick=()=>$('#comp-modal').classList.remove('active');
+$('#comp-modal-save').onclick=()=>{
+  const picks=[];
+  document.querySelectorAll('#comp-modal-lines .cmpick').forEach(chk=>{
+    if(chk.checked){
+      const id=+chk.dataset.id;
+      const q=parseFloat(document.querySelector(`#comp-modal-lines .compqty[data-id="${id}"]`).value)||1;
+      picks.push({compId:id,qty:q>0?q:1});
+    }
+  });
+  if(compModalTarget.type==='product'){
+    const p=products.find(x=>x.id==compModalTarget.id);
+    if(p){ p.compLines=picks; save(); renderProducts(); renderShop(); showToast('已更新组成部分'); }
+  }else{
+    draftCompLines=picks; updateRecipeStatus();
+  }
+  $('#comp-modal').classList.remove('active');
+};
+$('#comp-pick').onclick=()=>openCompModal({type:'new'});
+
+/* 包材库选择弹窗：列出所有包材，勾选并设置用量（单品配方→添加包材库） */
+let ingModalTarget=null;
+function openIngModal(target){
+  ingModalTarget=target;
+  const isPack = target.type==='new';           // 「添加包材库」只显示包材清单
+  const list = isPack ? ingredients.filter(i=>(i.type||'food')==='pack') : ingredients;
+  const cur = target.type==='product'
+    ? (products.find(x=>x.id==target.id)?.lines||[])
+    : draftLines;
+  const map=new Map(); cur.forEach(l=>map.set(String(l.ingId),l.qty));
+  $('#ing-modal-target').textContent = target.type==='product'
+    ? (products.find(x=>x.id==target.id)?.name||'')
+    : ($('#prod-name').value.trim()||'新建单品');
+  const box=$('#ing-modal-lines');box.innerHTML='';
+  $('#ing-modal-note').textContent=isPack?'勾选包材，并在「用量」里填数量（单位与包材清单一致）。':'勾选食材，并在「用量」里填数量（单位与进货清单一致）。';
+  if(!list.length){
+    box.innerHTML=isPack
+      ? '<div class="muted" style="font-size:12px;padding:4px 0">还没有包材，请先到「② 进货清单」的「包材清单」里添加（名称框选「包材」分类）。</div>'
+      : '<div class="muted" style="font-size:12px;padding:4px 0">还没有食材，请先到「② 进货清单」里添加。</div>';
+  }else{
+    list.forEach(i=>{
+      const qty=map.get(String(i.id))||0;
+      const div=document.createElement('div');div.className='modal-line';
+      div.innerHTML=`<label style="display:flex;align-items:center;gap:8px;flex:1;cursor:pointer">
+          <input type="checkbox" class="ingpick" data-id="${i.id}" ${qty>0?'checked':''}>
+          <span><b>${i.name}</b> <span class="muted">${fmtPrice(unitPricePerG(i))} 元/g · ${i.unit}</span></span>
+        </label>
+        <span class="muted">用量</span>
+        <input type="number" min="0" step="any" value="${qty>0?qty:1}" class="ingqty" data-id="${i.id}" style="width:72px" ${qty>0?'':'disabled'}>`;
+      const chk=div.querySelector('.ingpick');
+      const qin=div.querySelector('.ingqty');
+      chk.onchange=()=>{ qin.disabled=!chk.checked; if(chk.checked && !qin.value) qin.value=1; };
+      box.appendChild(div);
+    });
+  }
+  $('#ing-modal').classList.add('active');
+}
+$('#ing-modal-close').onclick=()=>$('#ing-modal').classList.remove('active');
+$('#ing-modal-save').onclick=()=>{
+  const picks=[];
+  document.querySelectorAll('#ing-modal-lines .ingpick').forEach(chk=>{
+    if(chk.checked){
+      const id=+chk.dataset.id;
+      const q=parseFloat(document.querySelector(`#ing-modal-lines .ingqty[data-id="${id}"]`).value)||1;
+      picks.push({ingId:id,qty:q>0?q:1});
+    }
+  });
+  if(ingModalTarget.type==='product'){
+    const p=products.find(x=>x.id==ingModalTarget.id);
+    if(p){ p.lines=picks; save(); renderProducts(); renderShop(); showToast('已更新食材'); }
+  }else{
+    draftLines=picks; updateRecipeStatus();
+  }
+  $('#ing-modal').classList.remove('active');
+};
+$('#ing-pick').onclick=()=>openIngModal({type:'new'});
+
+/* 配方绑定状态提示：反映已选的组成部分 */
+function updateRecipeStatus(){
+  const el=$('#recipe-status');if(!el)return;
+  const n=draftCompLines.length;
+  if(n){
+    const cost=draftCompLines.reduce((s,l)=>{const c=compById(l.compId);return s+(c?componentCost(c)*l.qty:0);},0);
+    el.innerHTML=`组成部分状态：已选 <b>${n}</b> 个部分，单份成本 <b>${yuan(cost)}</b>。点「＋ 添加单品」即生成到下方。`;
+    el.style.background='#eef5e9';el.style.borderLeftColor='var(--accent)';
+  }else{
+    el.innerHTML='组成部分状态：未选择部分。填好名称和分类后，点「🧩 选择组成部分」勾选组成单品的部分即可。';
+    el.style.background='#faf4ea';el.style.borderLeftColor='var(--brand)';
+  }
+}
+
+/* ---------- 组成部分库（CRUD + 食材行内编辑） ---------- */
+function renderComponents(){
+  const list=$('#comp-list');list.innerHTML='';
+  $('#comp-count').textContent=components.length?`（共 ${components.length} 个）`:'';
+  $('#comp-empty').style.display=components.length?'none':'block';
+  components.forEach(c=>{
+    const card=document.createElement('div');card.className='card';card.style.marginBottom='12px';
+    card.innerHTML=`
+      <div class="pchead">
+        <div class="pcname"><b style="font-size:15px">${c.name}</b></div>
+        <button class="btn danger sm" data-act="delcomp" data-id="${c.id}">删除</button>
+      </div>
+      <details class="comp-details">
+        <summary>食材与用量（${(c.lines||[]).length}）</summary>
+        <div id="clines-${c.id}" class="lines"></div>
+        <div class="addline">
+          <select id="cnewing-${c.id}"><option value="">＋ 选择食材…</option>
+            ${ingredients.map(i=>`<option value="${i.id}">${i.name}（${fmtPrice(unitPricePerG(i))} 元/g）</option>`).join('')}
+          </select>
+          <input id="cnewqty-${c.id}" type="number" min="0" step="any" placeholder="用量(同单位)">
+          <button class="btn sm" data-act="addcline" data-id="${c.id}">添加</button>
+        </div>
+      </details>`;
+    list.appendChild(card);
+    const lb=$('#clines-'+c.id);
+    (c.lines||[]).forEach((l,idx)=>{
+      const ing=ingById(l.ingId);
+      const row=document.createElement('div');row.className='lineitem';
+      row.innerHTML=`
+        <div class="liname">${ing?ing.name:'<i>已删除食材</i>'} <span class="muted">(${ing?fmtPrice(unitPricePerG(ing))+' 元/g':'—'})</span></div>
+        <div class="lirow">
+          <div class="liqty"><span class="muted">用量</span><input type="number" min="0" step="any" value="${l.qty}" data-cid="${c.id}" data-idx="${idx}" class="clineqty"></div>
+          <button class="delx" data-act="delcline" data-cid="${c.id}" data-idx="${idx}">✕</button>
+        </div>`;
+      lb.appendChild(row);
+    });
+    lb.querySelectorAll('.clineqty').forEach(inp=>inp.onchange=()=>{
+      const comp=components.find(x=>x.id==+inp.dataset.cid);
+      comp.lines[+inp.dataset.idx].qty=parseFloat(inp.value)||0;
+      saveComponents();renderComponents();renderProducts();renderShop();
+    });
+    lb.querySelectorAll('[data-act="delcline"]').forEach(b=>b.onclick=()=>{
+      const comp=components.find(x=>x.id==+b.dataset.cid);
+      comp.lines.splice(+b.dataset.idx,1);
+      saveComponents();renderComponents();renderProducts();renderShop();
+    });
+    card.querySelector('[data-act="addcline"]').onclick=()=>{
+      const cid=+card.querySelector('[data-act="addcline"]').dataset.id;
+      const ingId=+$('#cnewing-'+cid).value, qty=parseFloat($('#cnewqty-'+cid).value);
+      if(!ingId||!(qty>0)){showToast('请选择食材并填好用量');return;}
+      const comp=components.find(x=>x.id==cid);
+      comp.lines.push({ingId,qty});
+      saveComponents();renderComponents();renderProducts();renderShop();
+    };
+    card.querySelector('[data-act="delcomp"]').onclick=()=>{
+      if(!confirm(`删除组成部分「${c.name}」？已引用它的单品会同步移除该部分。`))return;
+      components=components.filter(x=>x.id!=c.id);
+      products.forEach(p=>{ if(p.compLines) p.compLines=p.compLines.filter(l=>l.compId!=c.id); });
+      saveComponents();renderComponents();renderProducts();renderShop();
+      showToast(`已删除「${c.name}」`);
+    };
+  });
+}
+/* ---------- 新建组成部分：弹窗内填写食材与用量 ---------- */
+let compDraft=[];        // 弹窗里正在编辑的该组成部分食材行
+let compDraftName='';
+function renderCompEditLines(){
+  const box=$('#comp-edit-lines');box.innerHTML='';
+  if(!compDraft.length){box.innerHTML='<div class="muted" style="font-size:12px;padding:4px 0">还没添加食材，下面选食材、填用量，点「添加」。</div>';return;}
+  compDraft.forEach((l,idx)=>{
+    const ing=ingById(l.ingId);
+    const div=document.createElement('div');div.className='compedit-row';
+    div.innerHTML=`<span>${ing?ing.name:'<i>已删除食材</i>'} <span class="muted">${l.qty} ${ing?ing.unit:''}</span></span>
+      <button class="delx" data-idx="${idx}">✕</button>`;
+    div.querySelector('.delx').onclick=()=>{compDraft.splice(+div.querySelector('.delx').dataset.idx,1);renderCompEditLines();};
+    box.appendChild(div);
+  });
+}
+function openCompEdit(){
+  const name=$('#comp-name').value.trim();
+  if(!name){showToast('请填写组成部分名称');return;}
+  compDraftName=name;
+  compDraft=[];
+  $('#comp-edit-name').textContent=name;
+  $('#comp-edit-ing').innerHTML='<option value="">＋ 选择食材…</option>'+
+    ingredients.map(i=>`<option value="${i.id}">${i.name}（${fmtPrice(unitPricePerG(i))} 元/g）</option>`).join('');
+  $('#comp-edit-qty').value='';
+  renderCompEditLines();
+  $('#comp-edit-modal').classList.add('active');
+}
+$('#comp-add').onclick=openCompEdit;
+$('#comp-edit-close').onclick=()=>$('#comp-edit-modal').classList.remove('active');
+$('#comp-edit-cancel').onclick=()=>$('#comp-edit-modal').classList.remove('active');
+$('#comp-edit-add').onclick=()=>{
+  const ingId=+$('#comp-edit-ing').value;
+  const qty=parseFloat($('#comp-edit-qty').value);
+  if(!ingId||!(qty>0)){showToast('请选择食材并填好用量');return;}
+  compDraft.push({ingId,qty});
+  renderCompEditLines();
+  $('#comp-edit-qty').value='';$('#comp-edit-ing').value='';$('#comp-edit-qty').focus();
+};
+$('#comp-edit-save').onclick=()=>{
+  if(!compDraft.length){showToast('请至少添加一种食材与用量');return;}
+  const id=(components.reduce((m,x)=>Math.max(m,x.id),0)||0)+1;
+  components.push({id,name:compDraftName,lines:compDraft.slice()});
+  saveComponents();renderComponents();renderProducts();renderShop();
+  $('#comp-name').value='';
+  $('#comp-edit-modal').classList.remove('active');
+  showToast(`已添加「${compDraftName}」`);
+};
+
+function renderProducts(){
+  const list=$('#prod-list');list.innerHTML='';
+  const q=$('#prod-search').value.trim().toLowerCase();
+  const filtered=products.filter(p=>!q||p.name.toLowerCase().includes(q)||p.cat.toLowerCase().includes(q));
+  $('#prod-count').textContent=products.length?`（共 ${products.length} 个）`:'';
+  $('#prod-empty').style.display=products.length?'none':'block';
+  filtered.forEach(p=>{
+    const card=document.createElement('div');
+    card.className='card';card.style.marginBottom='12px';
+    const compHtml=(p.compLines&&p.compLines.length)?`
+      <details class="recipe-details">
+        <summary>组成部分（${p.compLines.length}）</summary>
+        <div id="comps-${p.id}" class="lines"></div>
+        <div class="addline"><button class="btn sm" data-act="addcomp" data-id="${p.id}">＋ 加组成部分</button></div>
+      </details>`:'';
+    const ingHtml=(p.lines&&p.lines.length)?`
+      <details class="recipe-details">
+        <summary>食材明细</summary>
+        <div class="recipebox">
+          <div id="lines-${p.id}" class="lines"></div>
+          <div class="addline">
+            <select id="newing-${p.id}"><option value="">＋ 选择食材…</option>
+              ${ingredients.map(i=>`<option value="${i.id}">${i.name}（${fmtPrice(unitPricePerG(i))} 元/g）</option>`).join('')}
+            </select>
+            <input id="newqty-${p.id}" type="number" min="0" step="any" placeholder="用量(同单位)">
+            <button class="btn sm" data-act="addline" data-id="${p.id}">添加</button>
+          </div>
+        </div>
+      </details>`:'';
+    card.innerHTML=`
+      <div class="pchead">
+        <div class="pcname"><b style="font-size:15px">${p.name}</b> <span class="tag">${p.cat}</span></div>
+        <button class="btn danger sm" data-act="del" data-id="${p.id}">删除</button>
+      </div>
+      <div class="pcinfo">单份成本 ${yuan(productCost(p))} · 共 ${productIngredientCount(p)} 项食材</div>
+      ${compHtml}
+      ${ingHtml}`;
+    list.appendChild(card);
+
+    /* 组成部分 section */
+    if(p.compLines&&p.compLines.length){
+      const cb=$('#comps-'+p.id);
+      p.compLines.forEach((l,idx)=>{
+        const c=compById(l.compId);
+        const row=document.createElement('div');row.className='lineitem';
+        row.innerHTML=`
+          <div class="liname">${c?c.name:'<i>已删除部分</i>'} <span class="muted">(${c?yuan(componentCost(c))+' · '+Math.round(componentWeight(c))+'g':'—'})</span></div>
+          <div class="lirow">
+            <div class="liqty"><span class="muted">数量</span><input type="number" min="0" step="any" value="${l.qty}" data-id="${p.id}" data-idx="${idx}" class="compqty"></div>
+            <button class="delx" data-act="delcomp2" data-id="${p.id}" data-idx="${idx}">✕</button>
+          </div>`;
+        cb.appendChild(row);
+      });
+      cb.querySelectorAll('.compqty').forEach(inp=>inp.onchange=()=>{
+        const pr=products.find(x=>x.id==+inp.dataset.id);
+        pr.compLines[+inp.dataset.idx].qty=parseFloat(inp.value)||0;save();renderProducts();renderShop();
+      });
+      cb.querySelectorAll('[data-act="delcomp2"]').forEach(b=>b.onclick=()=>{
+        const pr=products.find(x=>x.id==+b.dataset.id);pr.compLines.splice(+b.dataset.idx,1);save();renderProducts();renderShop();
+      });
+      card.querySelector('[data-act="addcomp"]').onclick=()=>openCompModal({type:'product',id:p.id});
+    }
+    /* 旧食材明细 section */
+    if(p.lines&&p.lines.length){
+      const lb=$('#lines-'+p.id);
+      p.lines.forEach((l,idx)=>{
+        const ing=ingById(l.ingId);
+        const row=document.createElement('div');row.className='lineitem';
+        row.innerHTML=`
+          <div class="liname">${ing?ing.name:'<i>已删除食材</i>'} <span class="muted">(${ing?fmtPrice(unitPricePerG(ing))+' 元/g':'—'})</span></div>
+          <div class="lirow">
+            <div class="liqty"><span class="muted">用量</span><input type="number" min="0" step="any" value="${l.qty}" data-id="${p.id}" data-idx="${idx}" class="lineqty"></div>
+            <button class="delx" data-act="delline" data-id="${p.id}" data-idx="${idx}">✕</button>
+          </div>`;
+        lb.appendChild(row);
+      });
+      lb.querySelectorAll('.lineqty').forEach(inp=>inp.onchange=()=>{
+        const pr=products.find(x=>x.id==+inp.dataset.id);
+        pr.lines[+inp.dataset.idx].qty=parseFloat(inp.value)||0;save();renderProducts();
+      });
+      card.querySelector('[data-act="addline"]').onclick=()=>{
+        const pid=+card.querySelector('[data-act="addline"]').dataset.id;
+        const ingId=+$('#newing-'+pid).value,qty=parseFloat($('#newqty-'+pid).value);
+        if(!ingId||!(qty>0)){showToast('请选择食材并填好用量');return;}
+        products.find(x=>x.id==pid).lines.push({ingId,qty});save();renderProducts();
+      };
+      card.querySelectorAll('[data-act="delline"]').forEach(b=>b.onclick=()=>{
+        const pr=products.find(x=>x.id==+b.dataset.id);pr.lines.splice(+b.dataset.idx,1);save();renderProducts();
+      });
+    }
+    card.querySelector('[data-act="del"]').onclick=()=>{
+      deleteProduct(p);
+    };
+  });
+}
+$('#prod-add').onclick=()=>{
+  const name=$('#prod-name').value.trim();
+  const cat=$('#prod-cat').value;
+  if(!name){showToast('请填写单品名称');return;}
+  if(!draftCompLines.length && !draftLines.length){showToast('请先点「🧩 选择组成部分」或「📦 添加包材库」选择组成单品的内容');return;}
+  const id=(products.reduce((m,x)=>Math.max(m,x.id),0)||0)+1;
+  const date=$('#prod-date').value||'';
+  products.push({id,name,cat,lines:draftLines.slice(),compLines:draftCompLines.slice(),price:0,dprice:0,comm:0.2,scomm:0.2,
+    date,status:'active'});
+  save();renderProducts();renderShop();
+  $('#prod-name').value='';
+  draftCompLines=[];draftLines=[];updateRecipeStatus();
+};
+$('#prod-search').oninput=renderProducts;
+
+/* 删除单品 → 进回收站 */
+function deleteProduct(p){
+  bin.push({id:binId(),type:'product',data:{...p},deletedAt:Date.now()});
+  products=products.filter(x=>x.id!=p.id);
+  save();saveBin();renderProducts();renderBin();renderProfit();renderShop();
+  showToast(`「${p.name}」已删除，可到「⑤ 回收站」恢复`);
+}
+
+/* ---------- 店铺单品（热销 / 下架 / 各分类 三个板块） ---------- */
+const CAT_ORDER=['热压三明治','奶茶柠檬茶','舒芙蕾','燕麦雪饼','其他'];
+function setHot(id,on){
+  const p=products.find(x=>x.id==id);if(!p)return;
+  p.status=on?'hot':'active';
+  save();renderShop();
+}
+function setOff(id){
+  const p=products.find(x=>x.id==id);if(!p)return;
+  p.status='off';
+  save();renderShop();renderOff();
+  showToast(`「${p.name}」已下架，可在「⑥ 产品下架」恢复`);
+}
+function restoreShop(id){
+  const p=products.find(x=>x.id==id);if(!p)return;
+  p.status='active';save();renderShop();renderOff();
+  showToast(`「${p.name}」已恢复在售`);
+}
+/* 单个紧凑行（热销 / 下架 / 分类 三处通用，尺寸统一） */
+function shopRow(p,kind){
+  const meta=`${Math.round(productWeight(p))} g · ${Math.round(productCal(p))} kcal · 脂肪 ${Math.round(productFat(p))} g · 成本 ${yuan(productCost(p))}`;
+  let tag,btns,fire='';
+  if(kind==='hot'){
+    tag='<span class="tag c3">热销</span>';
+    btns=`<button class="btn danger sm" data-act="off" data-id="${p.id}">下架</button>`;
+  }else if(kind==='off'){
+    tag='<span class="tag c3">已下架</span>';
+    btns=`<button class="btn ghost sm" data-act="restore" data-id="${p.id}">恢复</button>`;
+  }else{ // cat
+    fire=p.status==='hot'?`<span class="fire" data-act="dh" data-id="${p.id}" title="双击取消热销">🔥</span>`:'';
+    btns=p.status==='hot'
+      ? `<button class="btn ghost sm" data-act="unhot" data-id="${p.id}">取消热销</button><button class="btn danger sm" data-act="off" data-id="${p.id}">下架</button>`
+      : `<button class="btn ghost sm" data-act="hot" data-id="${p.id}">🔥 热销</button><button class="btn danger sm" data-act="off" data-id="${p.id}">下架</button>`;
+  }
+  return `<div class="shoprow"><div class="sr-main"><div class="sr-name">${fire}<b>${p.name}</b></div><div class="sr-meta">${meta}</div></div><div class="sr-op">${btns}</div></div>`;
+}
+/* 生成一个板块卡片（标题 + 行列表） */
+function shopBoard(title,n,rowsHtml){
+  const c=document.createElement('div');c.className='card';
+  c.innerHTML=`<h2><span class="dot"></span>${title} <span class="muted" style="font-weight:400">（${n}）</span></h2><div class="blist">${rowsHtml}</div>`;
+  return c;
+}
+function renderShop(){
+  const list=$('#shop-list');list.innerHTML='';
+  const hots=products.filter(p=>p.status==='hot');
+  const onSale=products.filter(p=>p.status!=='off');
+  const offs=products.filter(p=>p.status==='off');
+  $('#shop-count').textContent=`（热销 ${hots.length} · 在售 ${onSale.length} · 下架 ${offs.length}）`;
+  $('#shop-empty').style.display=products.length?'none':'block';
+  /* 各分类板块（只含在售单品，不含下架；热销单品在名称前显示🔥） */
+  const groups={};
+  onSale.forEach(p=>{const k=p.cat||'其他'; (groups[k]=groups[k]||[]).push(p);});
+  const cats=CAT_ORDER.concat(Object.keys(groups).filter(k=>!CAT_ORDER.includes(k)));
+  cats.forEach(k=>{
+    const arr=groups[k];if(!arr||!arr.length)return;
+    const rows=arr.slice().sort((a,b)=>b.id-a.id).map(p=>shopRow(p,'cat')).join('');
+    list.appendChild(shopBoard(k,arr.length,rows));
+  });
+  list.querySelectorAll('[data-act="off"]').forEach(b=>b.onclick=()=>setOff(+b.dataset.id));
+  list.querySelectorAll('[data-act="hot"]').forEach(b=>b.onclick=()=>setHot(+b.dataset.id,true));
+  list.querySelectorAll('[data-act="unhot"]').forEach(b=>b.onclick=()=>setHot(+b.dataset.id,false));
+  list.querySelectorAll('.fire').forEach(f=>f.ondblclick=()=>setHot(+f.dataset.id,false));
+}
+
+/* ---------- 产品下架（保留不删，可恢复） ---------- */
+function renderOff(){
+  const list=$('#off-list');list.innerHTML='';
+  const offs=products.filter(p=>p.status==='off');
+  $('#off-count').textContent=offs.length?`（共 ${offs.length} 个）`:'';
+  $('#off-empty').style.display=offs.length?'none':'block';
+  offs.sort((a,b)=>b.id-a.id).forEach(p=>{
+    const card=document.createElement('div');card.className='card';card.style.marginBottom='10px';
+    card.innerHTML=`<div class="prodhead">
+      <div><span class="tag c3">已下架</span> <b style="font-size:15px">${p.name}</b>
+        <span class="muted" style="font-size:12px"> · ${p.cat} · ${Math.round(productCal(p))} kcal · 脂肪 ${Math.round(productFat(p))} g · 定价 ${yuan(pPrice(p))}</span></div>
+      <div><button class="btn ghost sm" data-act="restore" data-id="${p.id}">恢复</button></div>
+    </div>`;
+    list.appendChild(card);
+  });
+  list.querySelectorAll('[data-act="restore"]').forEach(b=>b.onclick=()=>{
+    const p=products.find(x=>x.id==+b.dataset.id);if(!p)return;
+    p.status='active';save();renderShop();renderOff();
+    showToast(`「${p.name}」已恢复在售`);
+  });
+}
+
+/* ---------- 回收站 ---------- */
+function renderBin(){
+  const list=$('#bin-list');list.innerHTML='';
+  $('#bin-count').textContent=bin.length?`（共 ${bin.length} 项）`:'';
+  $('#bin-empty-msg').style.display=bin.length?'none':'block';
+  bin.forEach(item=>{
+    const isIng=item.type==='ingredient';
+    const name=isIng?item.data.name:item.data.name;
+    const daysLeft=Math.max(0,10-Math.floor((Date.now()-item.deletedAt)/TEN_DAYS));
+    const card=document.createElement('div');card.className='card';card.style.marginBottom='10px';
+    card.innerHTML=`
+      <div class="prodhead">
+        <div>
+          <span class="tag ${isIng?'c2':'c3'}">${isIng?'食材':'单品'}</span>
+          <b style="font-size:15px">${name}</b>
+          <span class="muted" style="font-size:12px"> · 剩余 ${daysLeft} 天自动清除</span>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn ghost sm" data-act="restore" data-id="${item.id}">恢复</button>
+          <button class="btn danger sm" data-act="purge" data-id="${item.id}">永久删除</button>
+        </div>
+      </div>`;
+    list.appendChild(card);
+  });
+  list.querySelectorAll('[data-act="restore"]').forEach(b=>b.onclick=()=>restoreItem(+b.dataset.id));
+  list.querySelectorAll('[data-act="purge"]').forEach(b=>b.onclick=()=>{
+    bin=bin.filter(x=>x.id!=+b.dataset.id);saveBin();renderBin();
+    showToast('已永久删除');
+  });
+}
+function restoreItem(id){
+  const item=bin.find(x=>x.id==id);if(!item)return;
+  if(item.type==='ingredient'){
+    if(ingredients.some(x=>x.id===item.data.id)){
+      ingredients.push({...item.data,id:(ingredients.reduce((m,x)=>Math.max(m,x.id),0)||0)+1});
+    }else{
+      ingredients.push({...item.data});
+    }
+  }else{
+    if(products.some(x=>x.id===item.data.id)){
+      products.push({...item.data,id:(products.reduce((m,x)=>Math.max(m,x.id),0)||0)+1});
+    }else{
+      products.push({...item.data});
+    }
+  }
+  bin=bin.filter(x=>x.id!=id);
+  save();saveBin();renderIngredients();renderProducts();renderBin();renderProfit();renderShop();
+}
+$('#bin-empty').onclick=()=>{
+  if(!bin.length){showToast('回收站已经是空的。');return;}
+  bin=[];saveBin();renderBin();
+  showToast('回收站已清空');
+};
+
+/* ---------- 利润率（堂食 / 美团 / 闪购） ---------- */
+function renderProfit(){
+  const db=$('#dine-body');db.innerHTML='';
+  const elb=$('#del-body');elb.innerHTML='';
+  const slb=$('#shan-body');slb.innerHTML='';
+  $('#dine-empty').style.display=products.length?'none':'block';
+  $('#del-empty').style.display=products.length?'none':'block';
+  $('#shan-empty').style.display=products.length?'none':'block';
+  products.forEach(p=>{
+    const cost=productCost(p);
+    // 堂食
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><b>${p.name}</b></td><td><span class="tag">${p.cat}</span></td>
+      <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="price" value="${pPrice(p)}"></td>
+      <td class="num">${yuan(cost)}</td>
+      <td class="num" id="dine-profit-${p.id}">${yuan(pPrice(p)-cost)}</td>
+      <td class="num" id="dine-margin-${p.id}">${pct(pPrice(p)>0?(pPrice(p)-cost)/pPrice(p):0)}</td>`;
+    db.appendChild(tr);
+    // 美团
+    const tr2=document.createElement('tr');
+    tr2.innerHTML=`<td><b>${p.name}</b></td>
+      <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="dprice" value="${pDprice(p)}"></td>
+      <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="comm" value="${(pComm(p)*100).toFixed(0)}"></td>
+      <td class="num" id="del-fee-${p.id}">${yuan(pDprice(p)*pComm(p))}</td>
+      <td class="num">${yuan(cost)}</td>
+      <td class="num" id="del-profit-${p.id}">${yuan(pDprice(p)-pDprice(p)*pComm(p)-cost)}</td>
+      <td class="num" id="del-margin-${p.id}">${pct(pDprice(p)>0?(pDprice(p)-pDprice(p)*pComm(p)-cost)/pDprice(p):0)}</td>`;
+    elb.appendChild(tr2);
+    // 闪购（复用美团定价 dprice，独立扣点 scomm）
+    const tr3=document.createElement('tr');
+    tr3.innerHTML=`<td><b>${p.name}</b></td>
+      <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="dprice" value="${pDprice(p)}"></td>
+      <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="scomm" value="${(pScomm(p)*100).toFixed(0)}"></td>
+      <td class="num" id="shan-fee-${p.id}">${yuan(pDprice(p)*pScomm(p))}</td>
+      <td class="num">${yuan(cost)}</td>
+      <td class="num" id="shan-profit-${p.id}">${yuan(pDprice(p)-pDprice(p)*pScomm(p)-cost)}</td>
+      <td class="num" id="shan-margin-${p.id}">${pct(pDprice(p)>0?(pDprice(p)-pDprice(p)*pScomm(p)-cost)/pDprice(p):0)}</td>`;
+    slb.appendChild(tr3);
+  });
+  document.querySelectorAll('.pinput').forEach(inp=>inp.oninput=()=>{
+    const p=products.find(x=>x.id==+inp.dataset.id);if(!p)return;
+    const f=inp.dataset.f;
+    const v=parseFloat(inp.value)||0;
+    if(f==='comm'){p.comm=v/100;}else if(f==='scomm'){p.scomm=v/100;}else{p[f]=v;}
+    save();updateProfitRow(p);
+  });
+  // 美团统一扣点框
+  const gc=$('#global-comm');
+  if(document.activeElement!==gc){
+    const comms=products.map(p=>pComm(p));
+    const uniform=comms.length>0 && comms.every(c=>c===comms[0]);
+    gc.value=uniform?(comms[0]*100).toFixed(0):'';
+  }
+  // 闪购统一扣点框
+  const sc=$('#global-scomm');
+  if(document.activeElement!==sc){
+    const scomms=products.map(p=>pScomm(p));
+    const suniform=scomms.length>0 && scomms.every(c=>c===scomms[0]);
+    sc.value=suniform?(scomms[0]*100).toFixed(0):'';
+  }
+  // 恢复日期/备注/手动营收（localStorage 持久化）
+  ['dine','del','shan'].forEach(sec=>{
+    const dateEl=$('#'+sec+'-date'),noteEl=$('#'+sec+'-note'),totalEl=$('#'+sec+'-manual-total');
+    const key='bakery_'+sec+'_meta';
+    const meta=JSON.parse(localStorage.getItem(key)||'{}');
+    if(dateEl&&!dateEl.dataset.inited){dateEl.value=meta.date||'';dateEl.dataset.inited='1';
+      dateEl.oninput=()=>{const m=JSON.parse(localStorage.getItem(key)||'{}');m.date=dateEl.value;localStorage.setItem(key,JSON.stringify(m));};}
+    if(noteEl&&!noteEl.dataset.inited){noteEl.value=meta.note||'';noteEl.dataset.inited='1';
+      noteEl.oninput=()=>{const m=JSON.parse(localStorage.getItem(key)||'{}');m.note=noteEl.value;localStorage.setItem(key,JSON.stringify(m));};}
+    if(totalEl&&!totalEl.dataset.inited){totalEl.value=meta.total||'';totalEl.dataset.inited='1';
+      totalEl.oninput=()=>{const m=JSON.parse(localStorage.getItem(key)||'{}');m.total=totalEl.value;localStorage.setItem(key,JSON.stringify(m));};}
+  });
+}
+function updateProfitRow(p){
+  const cost=productCost(p);
+  const price=pPrice(p),dprice=pDprice(p),comm=pComm(p),scomm=pScomm(p);
+  $('#dine-profit-'+p.id).textContent=yuan(price-cost);
+  $('#dine-margin-'+p.id).textContent=pct(price>0?(price-cost)/price:0);
+  $('#del-fee-'+p.id).textContent=yuan(dprice*comm);
+  $('#del-profit-'+p.id).textContent=yuan(dprice-dprice*comm-cost);
+  $('#del-margin-'+p.id).textContent=pct(dprice>0?(dprice-dprice*comm-cost)/dprice:0);
+  // 闪购
+  const sf=$('#shan-fee-'+p.id);if(sf)sf.textContent=yuan(dprice*scomm);
+  const sp=$('#shan-profit-'+p.id);if(sp)sp.textContent=yuan(dprice-dprice*scomm-cost);
+  const sm=$('#shan-margin-'+p.id);if(sm)sm.textContent=pct(dprice>0?(dprice-dprice*scomm-cost)/dprice:0);
+}
+
+/* ---------- 清空全部 ---------- */
+$('#clear-all').onclick=()=>{
+  if(confirm('确定清空所有食材、单品和回收站数据？此操作不可撤销。')){
+    ingredients=[];products=[];bin=[];components=[];draftCompLines=[];draftLines=[];pendingIngType=null;ingTypeChosen=null;updateTypeChip();
+    save();saveBin();saveComponents();renderIngredients();renderProducts();renderBin();renderProfit();renderComponents();
+  }
+};
+
+/* ---------- 美团统一扣点 ---------- */
+$('#global-comm').oninput=()=>{
+  const c=parseFloat($('#global-comm').value)/100;
+  products.forEach(p=>p.comm=c);
+  save();
+  products.forEach(p=>updateProfitRow(p));
+  // 同步各行的扣点输入框
+  products.forEach(p=>{const ci=document.querySelector(`.pinput[data-id="${p.id}"][data-f="comm"]`);if(ci)ci.value=(c*100).toFixed(0);});
+};
+/* ---------- 闪购统一扣点 ---------- */
+$('#global-scomm').oninput=()=>{
+  const c=parseFloat($('#global-scomm').value)/100;
+  products.forEach(p=>p.scomm=c);
+  save();
+  products.forEach(p=>updateProfitRow(p));
+  // 同步各行的扣点输入框
+  products.forEach(p=>{const ci=document.querySelector(`.pinput[data-id="${p.id}"][data-f="scomm"]`);if(ci)ci.value=(c*100).toFixed(0);});
+};
+
+/* ---------- 数据保存 按钮 ---------- */
+$('#btn-export').onclick=exportData;
+$('#btn-import').onclick=()=>$('#file-import').click();
+$('#file-import').onchange=e=>{const f=e.target.files[0];if(f)importData(f);e.target.value='';};
+
+/* ---------- 初始化 ---------- */
+renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderOff();renderComponents();updateRecipeStatus();
+</script>
+</body>
+</html>
