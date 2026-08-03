@@ -137,6 +137,16 @@
     font-variant-numeric:tabular-nums}
   .shoprow .sr-op{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
   .shoprow .sr-op .btn{font-size:12px;padding:6px 10px;border-radius:8px}
+  /* 滑动删除：左滑出现删除键，右滑隐藏（桌面端点击行也可切换显隐） */
+  .shoprow.swipe{position:relative;overflow:hidden;display:block;padding:0}
+  .shoprow.swipe .swipe-front{position:relative;z-index:1;display:flex;align-items:center;gap:10px;
+    background:var(--panel);transition:transform .2s ease;padding:10px 0;border-top:1px solid var(--line)}
+  .shoprow.swipe:first-child .swipe-front{border-top:none}
+  .shoprow.swipe .swipe-del{position:absolute;top:0;right:0;height:100%;width:84px;border:none;
+    background:var(--danger);color:#fff;font-size:14px;font-weight:700;cursor:pointer;z-index:2;
+    transform:translateX(100%);transition:transform .2s ease}
+  .shoprow.swipe.open .swipe-front{transform:translateX(-84px)}
+  .shoprow.swipe.open .swipe-del{transform:translateX(0)}
   /* modal */
   .modal{position:fixed;inset:0;background:rgba(58,47,37,.45);display:none;align-items:center;
     justify-content:center;z-index:50;padding:16px}
@@ -147,6 +157,7 @@
     display:flex;justify-content:space-between;align-items:center}
   .modal-body{padding:16px 18px}
   .modal-foot{padding:14px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
+  .modal-foot.between{justify-content:space-between}
   .modal-lines{margin-bottom:12px}
   .modal-cal{margin:10px 0 4px;font-size:13px;color:#444;background:#f6f8fa;padding:8px 10px;border-radius:8px}
   .modal-line{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:9px 11px;
@@ -159,6 +170,7 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .ing-type-btn.sel{box-shadow:0 0 0 3px var(--brand-d);outline:none}
   #ing-type-chip{padding:2px 10px;border-radius:20px}
+  .green-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#22c55e;margin-right:6px;vertical-align:middle;box-shadow:0 0 0 3px rgba(34,197,94,.18)}
 </style>
 </head>
 <body>
@@ -169,7 +181,7 @@
     <div class="sub">录入食材 / 包材进货单价与用量 · 自动算出每个单品与分类的成本 / 利润</div>
   </div>
   <div class="spacer"></div>
-  <button class="btn danger sm" id="clear-all">🗑 清空全部数据</button>
+  <button class="btn danger sm" id="clear-all"><span class="green-dot"></span>清空全部数据</button>
 </header>
 
 <div class="wrap">
@@ -205,7 +217,7 @@
     <!-- 数据相关（原数据保存，置后） -->
     <div class="card">
       <h2><span class="dot"></span>数据相关</h2>
-      <div class="hint">点击「导出保存」把软件内的全部数据导出成文件；点击「导入恢复」选择文件合并数据。「公式1/公式2」可按截图表格格式一键导入。下方「预设数据」可一键导入示例数据包。</div>
+      <div class="hint">点击「导出保存」把软件内的全部数据导出成文件；点击「导入恢复」选择文件合并数据。「公式1」可按截图表格格式一键导入。下方「预设数据」可一键导入示例数据包。</div>
 
       <!-- 预设数据卡片 -->
       <div id="preset-list" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
@@ -216,7 +228,6 @@
         <button class="btn primary" id="btn-export">⬇ 导出保存</button>
         <button class="btn" id="btn-import">⬆ 导入恢复</button>
         <button class="btn ghost" id="btn-formula1">🧮 公式1：截图表格导入</button>
-        <button class="btn ghost" id="btn-formula2">🧮 公式2：配料+单品导入</button>
         <input type="file" id="file-import" accept="application/json,.json" style="display:none">
       </div>
       <div class="hint" id="io-info" style="margin-top:8px"></div>
@@ -227,8 +238,6 @@
   <section class="panel" id="panel-ing">
     <div class="card">
       <h2><span class="dot"></span>添加 / 编辑（食材 · 包材）</h2>
-      <div class="hint">填「食材/包材名称 + 进货单价 + 单份重量(默认g) + 单位」。先点名称框选「食材 / 包材」分类，再填名称；下方清单会自动算出 <b>单价(元/g)=进货单价÷单份重量</b>，配方成本即按用量×此单价累计。</div>
-      <div class="hint" style="margin-top:4px">「热量（100g/KJ） / 脂肪（100g/g）」按营养标签惯例填<b>每 100g（或每 100ml）</b>的数值；清单里热量会自动换算成 kcal（÷4.18），制作配方时再按用量累计成单品的 kcal 与脂肪。</div>
       <div class="grid cols-4" style="margin-top:12px">
         <div><label>食材/包材名称</label><input id="ing-name" placeholder="如：高筋面粉 / 打包盒"></div>
         <div><label>进货单价（元）</label><input id="ing-cost" type="number" min="0" step="any" placeholder="如：8（每kg）"></div>
@@ -400,7 +409,7 @@
   <section class="panel" id="panel-bin">
     <div class="card">
       <h2><span class="dot"></span>回收站 <span class="muted" id="bin-count" style="font-weight:400"></span></h2>
-      <div class="hint">删除的食材 / 单品会先到这里，保留 <b>10 天</b>，到期自动永久清除。可随时「恢复」回原处，或「永久删除」。</div>
+      <div class="hint">删除的食材 / 单品会先到这里，保留 <b>7 天</b>，到期自动永久清除。可随时「恢复」回原处，或「永久删除」。</div>
       <div class="toolbar">
         <div class="spacer"></div>
         <button class="btn danger" id="bin-empty">🗑 清空回收站</button>
@@ -487,6 +496,20 @@
   </div>
 </div>
 
+<!-- ============ 删除确认弹窗 ============ -->
+<div class="modal" id="confirm-del-modal">
+  <div class="modal-box" style="width:min(360px,100%)">
+    <div class="modal-head">删除确认</div>
+    <div class="modal-body" style="text-align:center;font-size:15px;padding:24px 18px">
+      是否删除该单品
+    </div>
+    <div class="modal-foot between">
+      <button class="btn primary" id="confirm-del-ok">确定</button>
+      <button class="btn ghost" id="confirm-del-cancel">取消</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ 公式1：截图表格导入弹窗 ============ -->
 <div class="modal" id="formula1-modal">
   <div class="modal-box" style="width:min(640px,100%)">
@@ -504,27 +527,6 @@
     <div class="modal-foot">
       <button class="btn ghost" id="formula1-cancel">取消</button>
       <button class="btn primary" id="formula1-ok">导入</button>
-    </div>
-  </div>
-</div>
-
-<!-- ============ 公式2：截图表格导入弹窗 ============ -->
-<div class="modal" id="formula2-modal">
-  <div class="modal-box" style="width:min(640px,100%)">
-    <div class="modal-head">
-      <span>🧮 公式2：配料+单品表格导入</span>
-      <span class="delx" id="formula2-close" title="关闭">✕</span>
-    </div>
-    <div class="modal-body">
-      <div class="hint" style="margin-bottom:10px">
-        粘贴符合「公式2」格式的 JSON 数据（食材清单 + 包材清单 + <b>配料配比</b> + 单品配方）。系统会自动按公式2计算成本并导入进货清单、配料成本与单品配方。
-      </div>
-      <textarea id="formula2-text" style="width:100%;min-height:220px;border:1px solid var(--line);border-radius:10px;padding:10px;font-family:monospace;font-size:12px" placeholder='{"ingredients":[...],"packs":[...],"components":[...],"products":[...]}'></textarea>
-      <div class="hint" style="margin-top:8px">公式2计算规则：<br>配料单份成本 = Σ(食材单价×用量)÷可制作数量；单品总成本 = Σ(配料单份成本×数量)+Σ(包材单价×数量)。示例文件 <code>formula2-example.json</code>。</div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn ghost" id="formula2-cancel">取消</button>
-      <button class="btn primary" id="formula2-ok">导入</button>
     </div>
   </div>
 </div>
@@ -568,50 +570,6 @@ const PRESETS=[
         price:18, dprice:16, comm:13, scomm:10
       }
     ]
-  },
-  {
-    id:'formula2',
-    name:'🥞 黑糖珍珠舒芙蕾',
-    desc:'8种食材 + 4种包材 + 3种配料 + 1个单品（公式2示例）',
-    ingredients:[
-      {name:'珍珠',     qty:1000, unit:'g',  cost:11.35, kj:1450, fat:0.8, type:'food'},
-      {name:'黑糖浆',   qty:1000, unit:'g',  cost:25.42, kj:480,  fat:1.6, type:'food'},
-      {name:'鸡蛋',     qty:70,   unit:'g',  cost:1,     kj:590,  fat:1,   type:'food'},
-      {name:'全脂牛奶', qty:1000, unit:'g',  cost:10,    kj:85,   fat:2,   type:'food'},
-      {name:'低筋面粉', qty:2500, unit:'g',  cost:10.18, kj:155,  fat:3,   type:'food'},
-      {name:'白砂糖',   qty:2500, unit:'g',  cost:17.36, kj:1313, fat:4,   type:'food'},
-      {name:'柠檬汁',   qty:200,  unit:'g',  cost:4.94,  kj:203,  fat:5,   type:'food'},
-      {name:'黄油',     qty:500,  unit:'g',  cost:19.18, kj:1111, fat:6,   type:'food'},
-      {name:'奶盖粉',   qty:800,  unit:'g',  cost:26.42, kj:2000, fat:6,   type:'food'},
-      {name:'淡奶油',   qty:989,  unit:'g',  cost:44.17, kj:3048, fat:7,   type:'food'},
-      {name:'水',       qty:1000, unit:'g',  cost:0,     kj:0,    fat:0,   type:'food'}
-    ],
-    packs:[
-      {name:'舒芙蕾打包盒', qty:50,  unit:'个', cost:10.73, type:'pack'},
-      {name:'一次性勺子',   qty:100, unit:'个', cost:7.09,  type:'pack'},
-      {name:'打包袋',       qty:8.7, unit:'个', cost:100,   type:'pack'},
-      {name:'100ML小料盒', qty:100, unit:'个', cost:6.5,   type:'pack'}
-    ],
-    components:[
-      {name:'舒芙蕾胚', servings:6, lines:[
-        {ingName:'鸡蛋',qty:55},{ingName:'全脂牛奶',qty:15},{ingName:'低筋面粉',qty:15},
-        {ingName:'白砂糖',qty:10},{ingName:'柠檬汁',qty:0.5},{ingName:'黄油',qty:1}
-      ]},
-      {name:'奶盖', servings:10, lines:[
-        {ingName:'奶盖粉',qty:480},{ingName:'全脂牛奶',qty:510},{ingName:'淡奶油',qty:989}
-      ]},
-      {name:'黑糖珍珠', servings:30, lines:[
-        {ingName:'珍珠',qty:1000},{ingName:'黑糖浆',qty:500},{ingName:'水',qty:50}
-      ]}
-    ],
-    products:[
-      {
-        name:'黑糖珍珠舒芙蕾', cat:'甜品', date:'2026-08',
-        components:[{compName:'舒芙蕾胚',qty:1},{compName:'奶盖',qty:1},{compName:'黑糖珍珠',qty:1}],
-        packLines:[{pkName:'舒芙蕾打包盒',qty:1},{pkName:'一次性勺子',qty:1},{pkName:'打包袋',qty:1},{pkName:'100ML小料盒',qty:1}],
-        price:0, dprice:0, comm:0, scomm:0
-      }
-    ]
   }
 ];
 
@@ -633,7 +591,7 @@ function applyPresetData(preset){
   });
   // 也把已有食材加入映射
   ingredients.forEach(i=>{if(!ingMap[i.name])ingMap[i.name]=i.id;});
-  // 导入配料（公式2：lines 为总用量，需除以 servings 得到单份用量）
+  // 导入配料（lines 为总用量，需除以 servings 得到单份用量）
   const compMap={}; // name -> new id
   (preset.components||[]).forEach((c,idx)=>{
     if(components.some(x=>x.name===c.name))return;
@@ -736,78 +694,6 @@ function importFormula1(text){
   showToast('公式1数据已导入');
 }
 
-/* ---------- 公式2：截图表格自动导入规则 ---------- */
-const FORMULA2_SCHEMA={
-  id:'formula2',
-  name:'公式2：食材+包材+配料+单品表格',
-  desc:'适用于「食材清单 + 包材清单 + 配料配比 + 单品配方」四区域截图/表格',
-  version:1,
-  fields:{
-    ingredient:['name','unitCost','weight','kj','fat'],
-    pack:['name','unitCost','count'],
-    component:['name','servings','lines'],
-    product:['name','components','packs']
-  },
-  formulas:[
-    '食材单价 = 进货单价 ÷ 克重',
-    '配料单份成本 = Σ(食材单价 × 用量) ÷ 可制作数量',
-    '单品总成本 = Σ(配料单份成本 × 数量) + Σ(包材单价 × 数量)',
-    '热量(kcal) = kJ ÷ 4.18（按单份用量自动累计）',
-    '脂肪(g) 按单份用量自动累计'
-  ]
-};
-
-/* 把符合公式2的原始数据转换成标准预设结构 */
-function buildFormula2Preset(raw){
-  const ingredients=(raw.ingredients||[]).map(it=>({
-    name:it.name, qty:Number(it.weight)||0, unit:'g',
-    cost:Number(it.unitCost)||0,
-    kj:Number(it.kj)||0, fat:Number(it.fat)||0,
-    type:'food'
-  }));
-  const packs=(raw.packs||[]).map(it=>({
-    name:it.name, qty:Number(it.count)||0, unit:'个',
-    cost:Number(it.unitCost)||0,
-    kj:0, fat:0, type:'pack'
-  }));
-  const components=(raw.components||[]).map(c=>({
-    name:c.name,
-    servings:Number(c.servings)||1,
-    lines:(c.lines||[]).map(x=>({ingName:x.name, qty:Number(x.qty)||0}))
-  }));
-  const products=(raw.products||[]).map(p=>({
-    name:p.name, cat:p.cat||'其他', date:p.date||'',
-    components:(p.components||[]).map(x=>({compName:x.name, qty:Number(x.qty)||1})),
-    packLines:(p.packs||[]).map(x=>({pkName:x.name, qty:Number(x.qty)||0})),
-    price:Number(p.price)||0, dprice:Number(p.dprice)||0,
-    comm:Number(p.comm)||0, scomm:Number(p.scomm)||0
-  }));
-  return {id:'formula2', name:'公式2导入数据', desc:'', ingredients, packs, components, products};
-}
-
-/* 解析公式2文本：支持 JSON */
-function parseFormula2(text){
-  text=(text||'').trim();
-  if(!text) throw new Error('请输入数据');
-  if(text.startsWith('{') || text.startsWith('[')){
-    try{
-      const obj=JSON.parse(text);
-      return Array.isArray(obj)?{ingredients:obj}:obj;
-    }catch(e){throw new Error('JSON 格式错误：'+e.message);}
-  }
-  throw new Error('目前公式2只支持 JSON 格式，请按示例粘贴');
-}
-
-/* 导入公式2数据（主入口） */
-function importFormula2(text){
-  const raw=parseFormula2(text);
-  const preset=buildFormula2Preset(raw);
-  const res=applyPresetData(preset);
-  const compInfo=res.nComp?` + ${res.nComp} 种配料` : '';
-  $('#io-info').textContent=`公式2导入完成：${res.nIng} 种食材 + ${res.nPack} 种包材${compInfo} + ${res.nProd} 个单品`;
-  showToast('公式2数据已导入');
-}
-
 /* 渲染预设卡片 */
 function renderPresets(){
   const box=$('#preset-list');
@@ -833,9 +719,9 @@ let products=JSON.parse(localStorage.getItem(LS_PROD)||'[]');
 let bin=JSON.parse(localStorage.getItem(LS_BIN)||'[]');
 let components=JSON.parse(localStorage.getItem(LS_COMP)||'[]');
 
-/* 回收站自动清除：超过 10 天的项永久删除 */
-const TEN_DAYS=10*24*60*60*1000;
-bin=bin.filter(it=>Date.now()-it.deletedAt<=TEN_DAYS);
+/* 回收站自动清除：超过 7 天的项永久删除 */
+const SEVEN_DAYS=7*24*60*60*1000;
+bin=bin.filter(it=>Date.now()-it.deletedAt<=SEVEN_DAYS);
 
 function save(){localStorage.setItem(LS_ING,JSON.stringify(ingredients));localStorage.setItem(LS_PROD,JSON.stringify(products));}
 function saveBin(){localStorage.setItem(LS_BIN,JSON.stringify(bin));}
@@ -906,6 +792,8 @@ function unitPricePerG(i){                                // 单价(元/g)=进�
 function fmtPrice(val){
   return Math.ceil(val*10000)/10000;
 }
+/* 成本显示：固定保留4位小数，第5位非0则进1（0舍1进 / 向上取整） */
+function fmtCost(val){ return fmtPrice(val).toFixed(4); }
 function lineCost(line){                                   // 单份成本=用量(克)×单价(元/g)
   const i=ingById(line.ingId);
   if(!i)return 0;
@@ -1084,7 +972,7 @@ function openCompModal(target){
       const div=document.createElement('div');div.className='modal-line';
       div.innerHTML=`<label class="ln-label" style="cursor:pointer">
           <input type="checkbox" class="cmpick" data-id="${c.id}" ${qty>0?'checked':''}>
-          <span><b>${c.name}</b> <span class="muted">${yuan(componentCost(c))} · ${Math.round(componentWeight(c))}g</span></span>
+          <span><b>${c.name}</b> <span class="muted">${fmtCost(componentCost(c))} 元 · ${Math.round(componentWeight(c))}g</span></span>
         </label>
         <span class="qty-group"><span class="muted">数量</span>
         <input type="number" min="0" step="any" value="${qty>0?qty:1}" class="compqty" data-id="${c.id}" style="width:72px" ${qty>0?'':'disabled'}></span>`;
@@ -1179,7 +1067,7 @@ function updateRecipeStatus(){
   const n=draftCompLines.length;
   if(n){
     const cost=draftCompLines.reduce((s,l)=>{const c=compById(l.compId);return s+(c?componentCost(c)*l.qty:0);},0);
-    el.innerHTML=`配料配比状态：已选 <b>${n}</b> 个部分，单份成本 <b>${yuan(cost)}</b>。点「＋ 添加单品」即生成到下方。`;
+    el.innerHTML=`配料配比状态：已选 <b>${n}</b> 个部分，单份成本 <b>${fmtCost(cost)} 元</b>。点「＋ 添加单品」即生成到下方。`;
     el.style.background='#eef5e9';el.style.borderLeftColor='var(--accent)';
   }else{
     el.innerHTML='配料配比状态：未选择部分。填好名称和分类后，点「🧩 选择配料」勾选组成单品的部分即可。';
@@ -1196,7 +1084,7 @@ function renderComponents(){
     const card=document.createElement('div');card.className='card';card.style.marginBottom='12px';
     card.innerHTML=`
       <div class="pchead">
-        <div class="pcname"><b style="font-size:15px">${c.name}</b></div>
+        <div class="pcname"><b style="font-size:15px">${c.name}</b> <span class="muted">${fmtCost(componentCost(c))} 元 · ${Math.round(componentWeight(c))}g</span></div>
         <button class="btn danger sm" data-act="delcomp" data-id="${c.id}">删除</button>
       </div>
       <details class="comp-details">
@@ -1216,7 +1104,7 @@ function renderComponents(){
       const ing=ingById(l.ingId);
       const row=document.createElement('div');row.className='lineitem';
       row.innerHTML=`
-        <div class="liname">${ing?ing.name:'<i>已删除食材</i>'} <span class="muted">(${ing?fmtPrice(unitPricePerG(ing))+' 元/g':'—'})</span></div>
+        <div class="liname">${ing?ing.name:'<i>已删除食材</i>'} <span class="muted">(${ing?fmtPrice(unitPricePerG(ing))+' 元/g · 成本 '+fmtCost(lineCost(l))+' 元':'—'})</span></div>
         <div class="lirow">
           <div class="liqty"><span class="muted">用量</span><input type="number" min="0" step="any" value="${l.qty}" data-cid="${c.id}" data-idx="${idx}" class="clineqty"></div>
           <button class="delx" data-act="delcline" data-cid="${c.id}" data-idx="${idx}">✕</button>
@@ -1344,7 +1232,7 @@ function renderProducts(){
         const c=compById(l.compId);
         const row=document.createElement('div');row.className='lineitem';
         row.innerHTML=`
-          <div class="liname">${c?c.name:'<i>已删除部分</i>'} <span class="muted">(${c?yuan(componentCost(c))+' · '+Math.round(componentWeight(c))+'g':'—'})</span></div>
+          <div class="liname">${c?c.name:'<i>已删除部分</i>'} <span class="muted">(${c?fmtCost(componentCost(c))+' 元 · '+Math.round(componentWeight(c))+'g':'—'})</span></div>
           <div class="lirow">
             <div class="liqty"><span class="muted">数量</span><input type="number" min="0" step="any" value="${l.qty}" data-id="${p.id}" data-idx="${idx}" class="compqty"></div>
             <button class="delx" data-act="delcomp2" data-id="${p.id}" data-idx="${idx}">✕</button>
@@ -1367,7 +1255,7 @@ function renderProducts(){
         const ing=ingById(l.ingId);
         const row=document.createElement('div');row.className='lineitem';
         row.innerHTML=`
-          <div class="liname">${ing?ing.name:'<i>已删除食材</i>'} <span class="muted">(${ing?fmtPrice(unitPricePerG(ing))+' 元/g':'—'})</span></div>
+          <div class="liname">${ing?ing.name:'<i>已删除食材</i>'} <span class="muted">(${ing?fmtPrice(unitPricePerG(ing))+' 元/g · 成本 '+fmtCost(lineCost(l))+' 元':'—'})</span></div>
           <div class="lirow">
             <div class="liqty"><span class="muted">用量</span><input type="number" min="0" step="any" value="${l.qty}" data-id="${p.id}" data-idx="${idx}" class="lineqty"></div>
             <button class="delx" data-act="delline" data-id="${p.id}" data-idx="${idx}">✕</button>
@@ -1450,7 +1338,13 @@ function shopRow(p,kind){
       ? `<button class="btn ghost sm" data-act="unhot" data-id="${p.id}">取消热销</button><button class="btn danger sm" data-act="off" data-id="${p.id}">下架</button>`
       : `<button class="btn ghost sm" data-act="hot" data-id="${p.id}">🔥 热销</button><button class="btn danger sm" data-act="off" data-id="${p.id}">下架</button>`;
   }
-  return `<div class="shoprow"><div class="sr-main"><div class="sr-name">${fire}<b>${p.name}</b></div><div class="sr-meta">${meta}</div></div><div class="sr-op">${btns}</div></div>`;
+  return `<div class="shoprow swipe" data-id="${p.id}">
+    <button class="swipe-del" data-act="del" data-id="${p.id}">删除</button>
+    <div class="swipe-front">
+      <div class="sr-main"><div class="sr-name">${fire}<b>${p.name}</b></div><div class="sr-meta">${meta}</div></div>
+      <div class="sr-op">${btns}</div>
+    </div>
+  </div>`;
 }
 /* 生成一个板块卡片（标题 + 行列表） */
 function shopBoard(title,n,rowsHtml){
@@ -1478,6 +1372,25 @@ function renderShop(){
   list.querySelectorAll('[data-act="hot"]').forEach(b=>b.onclick=()=>setHot(+b.dataset.id,true));
   list.querySelectorAll('[data-act="unhot"]').forEach(b=>b.onclick=()=>setHot(+b.dataset.id,false));
   list.querySelectorAll('.fire').forEach(f=>f.ondblclick=()=>setHot(+f.dataset.id,false));
+  // 滑动删除：左滑或点击行（非操作按钮区域）打开确认弹窗
+  list.querySelectorAll('.shoprow.swipe').forEach(row=>{
+    const id=+row.dataset.id;
+    const front=row.querySelector('.swipe-front');
+    const openConfirm=()=>{ pendingDelId=id; $('#confirm-del-modal').classList.add('active'); };
+    // 桌面端：点击行打开确认弹窗
+    front.addEventListener('click',e=>{
+      if(e.target.closest('[data-act]'))return;
+      openConfirm();
+    });
+    // 触摸滑动手势
+    let sx=0,dx=0,drag=false;
+    row.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;dx=0;drag=true;},{passive:true});
+    row.addEventListener('touchmove',e=>{if(!drag)return;dx=e.touches[0].clientX-sx;},{passive:true});
+    row.addEventListener('touchend',()=>{
+      drag=false;
+      if(dx<=-40){openConfirm();}
+    });
+  });
 }
 
 /* ---------- 产品下架（保留不删，可恢复） ---------- */
@@ -1509,13 +1422,16 @@ function renderBin(){
   $('#bin-empty-msg').style.display=bin.length?'none':'block';
   bin.forEach(item=>{
     const isIng=item.type==='ingredient';
-    const name=isIng?item.data.name:item.data.name;
-    const daysLeft=Math.max(0,10-Math.floor((Date.now()-item.deletedAt)/TEN_DAYS));
+    const isComp=item.type==='component';
+    const name=item.data.name;
+    const daysLeft=Math.max(0,7-Math.floor((Date.now()-item.deletedAt)/SEVEN_DAYS));
+    const tagCls=isIng?'c2':isComp?'c4':'c3';
+    const tagTxt=isIng?'食材':isComp?'配料':'单品';
     const card=document.createElement('div');card.className='card';card.style.marginBottom='10px';
     card.innerHTML=`
       <div class="prodhead">
         <div>
-          <span class="tag ${isIng?'c2':'c3'}">${isIng?'食材':'单品'}</span>
+          <span class="tag ${tagCls}">${tagTxt}</span>
           <b style="font-size:15px">${name}</b>
           <span class="muted" style="font-size:12px"> · 剩余 ${daysLeft} 天自动清除</span>
         </div>
@@ -1540,6 +1456,12 @@ function restoreItem(id){
     }else{
       ingredients.push({...item.data});
     }
+  }else if(item.type==='component'){
+    if(components.some(x=>x.id===item.data.id)){
+      components.push({...item.data,id:(components.reduce((m,x)=>Math.max(m,x.id),0)||0)+1});
+    }else{
+      components.push({...item.data});
+    }
   }else{
     if(products.some(x=>x.id===item.data.id)){
       products.push({...item.data,id:(products.reduce((m,x)=>Math.max(m,x.id),0)||0)+1});
@@ -1548,7 +1470,7 @@ function restoreItem(id){
     }
   }
   bin=bin.filter(x=>x.id!=id);
-  save();saveBin();renderIngredients();renderProducts();renderBin();renderProfit();renderShop();
+  save();saveBin();renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderComponents();
 }
 $('#bin-empty').onclick=()=>{
   if(!bin.length){showToast('回收站已经是空的。');return;}
@@ -1569,7 +1491,7 @@ function renderProfit(){
     // 堂食
     const tr=document.createElement('tr');
     tr.innerHTML=`<td><b>${p.name}</b></td><td><span class="tag">${p.cat}</span></td>
-      <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="price" value="${pPrice(p)}"></td>
+      <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="price" value="${p.price||''}"></td>
       <td class="num">${yuan(cost)}</td>
       <td class="num" id="dine-profit-${p.id}">${yuan(pPrice(p)-cost)}</td>
       <td class="num" id="dine-margin-${p.id}">${pct(pPrice(p)>0?(pPrice(p)-cost)/pPrice(p):0)}</td>`;
@@ -1577,8 +1499,8 @@ function renderProfit(){
     // 美团
     const tr2=document.createElement('tr');
     tr2.innerHTML=`<td><b>${p.name}</b></td>
-      <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="dprice" value="${pDprice(p)}"></td>
-      <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="comm" value="${(pComm(p)*100).toFixed(0)}"></td>
+      <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="dprice" value="${p.dprice||''}"></td>
+      <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="comm" value="${p.comm||''}"></td>
       <td class="num" id="del-fee-${p.id}">${yuan(pDprice(p)*pComm(p))}</td>
       <td class="num">${yuan(cost)}</td>
       <td class="num" id="del-profit-${p.id}">${yuan(pDprice(p)-pDprice(p)*pComm(p)-cost)}</td>
@@ -1587,8 +1509,8 @@ function renderProfit(){
     // 闪购（复用美团定价 dprice，独立扣点 scomm）
     const tr3=document.createElement('tr');
     tr3.innerHTML=`<td><b>${p.name}</b></td>
-      <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="dprice" value="${pDprice(p)}"></td>
-      <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="scomm" value="${(pScomm(p)*100).toFixed(0)}"></td>
+      <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="dprice" value="${p.dprice||''}"></td>
+      <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="scomm" value="${p.scomm||''}"></td>
       <td class="num" id="shan-fee-${p.id}">${yuan(pDprice(p)*pScomm(p))}</td>
       <td class="num">${yuan(cost)}</td>
       <td class="num" id="shan-profit-${p.id}">${yuan(pDprice(p)-pDprice(p)*pScomm(p)-cost)}</td>
@@ -1602,20 +1524,11 @@ function renderProfit(){
     if(f==='comm'){p.comm=v/100;}else if(f==='scomm'){p.scomm=v/100;}else{p[f]=v;}
     save();updateProfitRow(p);
   });
-  // 美团统一扣点框
+  // 美团/闪购统一扣点框默认空白，不预填
   const gc=$('#global-comm');
-  if(document.activeElement!==gc){
-    const comms=products.map(p=>pComm(p));
-    const uniform=comms.length>0 && comms.every(c=>c===comms[0]);
-    gc.value=uniform?(comms[0]*100).toFixed(0):'';
-  }
-  // 闪购统一扣点框
+  if(document.activeElement!==gc) gc.value='';
   const sc=$('#global-scomm');
-  if(document.activeElement!==sc){
-    const scomms=products.map(p=>pScomm(p));
-    const suniform=scomms.length>0 && scomms.every(c=>c===scomms[0]);
-    sc.value=suniform?(scomms[0]*100).toFixed(0):'';
-  }
+  if(document.activeElement!==sc) sc.value='';
   // 恢复日期/备注/手动营收（localStorage 持久化）
   ['dine','del','shan'].forEach(sec=>{
     const dateEl=$('#'+sec+'-date'),noteEl=$('#'+sec+'-note'),totalEl=$('#'+sec+'-manual-total');
@@ -1643,11 +1556,19 @@ function updateProfitRow(p){
   const sm=$('#shan-margin-'+p.id);if(sm)sm.textContent=pct(dprice>0?(dprice-dprice*scomm-cost)/dprice:0);
 }
 
-/* ---------- 清空全部 ---------- */
+/* ---------- 清空全部：所有板块数据移入回收站，7天后自动清除 ---------- */
 $('#clear-all').onclick=()=>{
-  if(confirm('确定清空所有食材、单品和回收站数据？此操作不可撤销。')){
-    ingredients=[];products=[];bin=[];components=[];draftCompLines=[];draftLines=[];pendingIngType=null;ingTypeChosen=null;updateTypeChip();
-    save();saveBin();saveComponents();renderIngredients();renderProducts();renderBin();renderProfit();renderComponents();
+  if(confirm('确定清空所有数据？所有食材、配料、单品将全部移入回收站，7天后自动永久清除（可到「⑥ 回收站」恢复）。此操作不可撤销。')){
+    const now=Date.now();
+    ingredients.forEach(i=>bin.push({id:binId(),type:'ingredient',data:{...i},deletedAt:now}));
+    components.forEach(c=>bin.push({id:binId(),type:'component',data:{...c},deletedAt:now}));
+    products.forEach(p=>bin.push({id:binId(),type:'product',data:{...p},deletedAt:now}));
+    ingredients=[];products=[];components=[];draftCompLines=[];draftLines=[];pendingIngType=null;ingTypeChosen=null;
+    ['dine','del','shan'].forEach(s=>localStorage.removeItem('bakery_'+s+'_meta'));
+    save();saveBin();saveComponents();
+    updateTypeChip();
+    renderIngredients();renderProducts();renderBin();renderProfit();renderComponents();renderShop();renderOff();
+    showToast('已全部移入回收站，可恢复；7天后自动清除');
   }
 };
 
@@ -1683,13 +1604,16 @@ $('#formula1-ok').onclick=()=>{
   catch(e){showToast(e.message);}
 };
 
-/* ---------- 公式2导入按钮 ---------- */
-$('#btn-formula2').onclick=()=>{$('#formula2-text').value='';$('#formula2-modal').classList.add('active');};
-$('#formula2-close').onclick=$('#formula2-cancel').onclick=()=>$('#formula2-modal').classList.remove('active');
-$('#formula2-ok').onclick=()=>{
-  try{importFormula2($('#formula2-text').value);$('#formula2-modal').classList.remove('active');}
-  catch(e){showToast(e.message);}
+/* ---------- 删除确认弹窗 ---------- */
+let pendingDelId=null;
+$('#confirm-del-ok').onclick=()=>{
+  if(pendingDelId){
+    const p=products.find(x=>x.id===pendingDelId);
+    if(p) deleteProduct(p);
+  }
+  $('#confirm-del-modal').classList.remove('active');pendingDelId=null;
 };
+$('#confirm-del-cancel').onclick=()=>{$('#confirm-del-modal').classList.remove('active');pendingDelId=null;};
 
 /* ---------- 初始化 ---------- */
 renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderOff();renderComponents();updateRecipeStatus();renderPresets();
