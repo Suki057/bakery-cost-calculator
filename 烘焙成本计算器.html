@@ -174,7 +174,7 @@
     background:#3a2f25;color:#fff;padding:10px 18px;border-radius:24px;font-size:13px;
     box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:99;opacity:0;transition:.25s;pointer-events:none}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  .ing-type-btn.sel{box-shadow:0 0 0 3px var(--brand-d);outline:none}
+  .ing-type-btn.sel{background:var(--brand);color:#fff;border-color:var(--brand);box-shadow:none;outline:none}
   #ing-type-chip{padding:2px 10px;border-radius:20px}
   .green-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#22c55e;margin-right:6px;vertical-align:middle;box-shadow:0 0 0 3px rgba(34,197,94,.18)}
   #clear-all{white-space:nowrap;flex-shrink:0}
@@ -492,7 +492,7 @@
     <div class="modal-body">
       <div class="hint" style="margin-bottom:12px">请选择该条目的分类（二选一），确定后将返回名称框输入名称：</div>
       <div style="display:flex;gap:10px">
-        <button class="btn ing-type-btn" id="ing-type-food" style="flex:1;padding:18px 10px;font-size:16px;font-weight:700">🥬 食材</button>
+        <button class="btn ghost ing-type-btn" id="ing-type-food" style="flex:1;padding:18px 10px;font-size:16px;font-weight:700">🥬 食材</button>
         <button class="btn ghost ing-type-btn" id="ing-type-pack" style="flex:1;padding:18px 10px;font-size:16px;font-weight:700">📦 包材</button>
       </div>
     </div>
