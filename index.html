@@ -205,7 +205,7 @@
     <!-- 数据相关（原数据保存，置后） -->
     <div class="card">
       <h2><span class="dot"></span>数据相关</h2>
-      <div class="hint">点击「导出保存」把软件内的全部数据导出成文件；点击「导入恢复」选择文件合并数据。下方「预设数据」可一键导入示例数据包。</div>
+      <div class="hint">点击「导出保存」把软件内的全部数据导出成文件；点击「导入恢复」选择文件合并数据。「公式1/公式2」可按截图表格格式一键导入。下方「预设数据」可一键导入示例数据包。</div>
 
       <!-- 预设数据卡片 -->
       <div id="preset-list" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
@@ -216,6 +216,7 @@
         <button class="btn primary" id="btn-export">⬇ 导出保存</button>
         <button class="btn" id="btn-import">⬆ 导入恢复</button>
         <button class="btn ghost" id="btn-formula1">🧮 公式1：截图表格导入</button>
+        <button class="btn ghost" id="btn-formula2">🧮 公式2：配料+单品导入</button>
         <input type="file" id="file-import" accept="application/json,.json" style="display:none">
       </div>
       <div class="hint" id="io-info" style="margin-top:8px"></div>
@@ -507,6 +508,27 @@
   </div>
 </div>
 
+<!-- ============ 公式2：截图表格导入弹窗 ============ -->
+<div class="modal" id="formula2-modal">
+  <div class="modal-box" style="width:min(640px,100%)">
+    <div class="modal-head">
+      <span>🧮 公式2：配料+单品表格导入</span>
+      <span class="delx" id="formula2-close" title="关闭">✕</span>
+    </div>
+    <div class="modal-body">
+      <div class="hint" style="margin-bottom:10px">
+        粘贴符合「公式2」格式的 JSON 数据（食材清单 + 包材清单 + <b>配料配比</b> + 单品配方）。系统会自动按公式2计算成本并导入进货清单、配料成本与单品配方。
+      </div>
+      <textarea id="formula2-text" style="width:100%;min-height:220px;border:1px solid var(--line);border-radius:10px;padding:10px;font-family:monospace;font-size:12px" placeholder='{"ingredients":[...],"packs":[...],"components":[...],"products":[...]}'></textarea>
+      <div class="hint" style="margin-top:8px">公式2计算规则：<br>配料单份成本 = Σ(食材单价×用量)÷可制作数量；单品总成本 = Σ(配料单份成本×数量)+Σ(包材单价×数量)。示例文件 <code>formula2-example.json</code>。</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" id="formula2-cancel">取消</button>
+      <button class="btn primary" id="formula2-ok">导入</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -546,6 +568,50 @@ const PRESETS=[
         price:18, dprice:16, comm:13, scomm:10
       }
     ]
+  },
+  {
+    id:'formula2',
+    name:'🥞 黑糖珍珠舒芙蕾',
+    desc:'8种食材 + 4种包材 + 3种配料 + 1个单品（公式2示例）',
+    ingredients:[
+      {name:'珍珠',     qty:1000, unit:'g',  cost:11.35, kj:1450, fat:0.8, type:'food'},
+      {name:'黑糖浆',   qty:1000, unit:'g',  cost:25.42, kj:480,  fat:1.6, type:'food'},
+      {name:'鸡蛋',     qty:70,   unit:'g',  cost:1,     kj:590,  fat:1,   type:'food'},
+      {name:'全脂牛奶', qty:1000, unit:'g',  cost:10,    kj:85,   fat:2,   type:'food'},
+      {name:'低筋面粉', qty:2500, unit:'g',  cost:10.18, kj:155,  fat:3,   type:'food'},
+      {name:'白砂糖',   qty:2500, unit:'g',  cost:17.36, kj:1313, fat:4,   type:'food'},
+      {name:'柠檬汁',   qty:200,  unit:'g',  cost:4.94,  kj:203,  fat:5,   type:'food'},
+      {name:'黄油',     qty:500,  unit:'g',  cost:19.18, kj:1111, fat:6,   type:'food'},
+      {name:'奶盖粉',   qty:800,  unit:'g',  cost:26.42, kj:2000, fat:6,   type:'food'},
+      {name:'淡奶油',   qty:989,  unit:'g',  cost:44.17, kj:3048, fat:7,   type:'food'},
+      {name:'水',       qty:1000, unit:'g',  cost:0,     kj:0,    fat:0,   type:'food'}
+    ],
+    packs:[
+      {name:'舒芙蕾打包盒', qty:50,  unit:'个', cost:10.73, type:'pack'},
+      {name:'一次性勺子',   qty:100, unit:'个', cost:7.09,  type:'pack'},
+      {name:'打包袋',       qty:8.7, unit:'个', cost:100,   type:'pack'},
+      {name:'100ML小料盒', qty:100, unit:'个', cost:6.5,   type:'pack'}
+    ],
+    components:[
+      {name:'舒芙蕾胚', servings:6, lines:[
+        {ingName:'鸡蛋',qty:55},{ingName:'全脂牛奶',qty:15},{ingName:'低筋面粉',qty:15},
+        {ingName:'白砂糖',qty:10},{ingName:'柠檬汁',qty:0.5},{ingName:'黄油',qty:1}
+      ]},
+      {name:'奶盖', servings:10, lines:[
+        {ingName:'奶盖粉',qty:480},{ingName:'全脂牛奶',qty:510},{ingName:'淡奶油',qty:989}
+      ]},
+      {name:'黑糖珍珠', servings:30, lines:[
+        {ingName:'珍珠',qty:1000},{ingName:'黑糖浆',qty:500},{ingName:'水',qty:50}
+      ]}
+    ],
+    products:[
+      {
+        name:'黑糖珍珠舒芙蕾', cat:'甜品', date:'2026-08',
+        components:[{compName:'舒芙蕾胚',qty:1},{compName:'奶盖',qty:1},{compName:'黑糖珍珠',qty:1}],
+        packLines:[{pkName:'舒芙蕾打包盒',qty:1},{pkName:'一次性勺子',qty:1},{pkName:'打包袋',qty:1},{pkName:'100ML小料盒',qty:1}],
+        price:0, dprice:0, comm:0, scomm:0
+      }
+    ]
   }
 ];
 
@@ -553,7 +619,8 @@ const PRESETS=[
 function applyPresetData(preset){
   const maxIngId=(ingredients.reduce((m,i)=>Math.max(m,i.id),0)||0);
   const maxProdId=(products.reduce((m,p)=>Math.max(m,p.id),0)||0);
-  let nIng=0,nPack=0,nProd=0,nAdded=0;
+  const maxCompId=(components.reduce((m,c)=>Math.max(m,c.id),0)||0);
+  let nIng=0,nPack=0,nProd=0,nComp=0,nAdded=0;
   // 导入食材
   const ingMap={};  // name -> new id
   [...preset.ingredients,...preset.packs].forEach((s,idx)=>{
@@ -566,22 +633,39 @@ function applyPresetData(preset){
   });
   // 也把已有食材加入映射
   ingredients.forEach(i=>{if(!ingMap[i.name])ingMap[i.name]=i.id;});
+  // 导入配料（公式2：lines 为总用量，需除以 servings 得到单份用量）
+  const compMap={}; // name -> new id
+  (preset.components||[]).forEach((c,idx)=>{
+    if(components.some(x=>x.name===c.name))return;
+    const newId=maxCompId+nComp+1;
+    compMap[c.name]=newId;
+    const servings=Number(c.servings)||1;
+    const lines=(c.lines||[]).map(l=>{
+      const id=ingMap[l.ingName];
+      return id?{ingId:id,qty:(Number(l.qty)||0)/servings}:null;
+    }).filter(Boolean);
+    components.push({id:newId,name:c.name,lines});
+    nComp++;
+  });
+  // 把已有配料也加入映射
+  components.forEach(c=>{if(!compMap[c.name])compMap[c.name]=c.id;});
   // 导入单品
   preset.products.forEach(p=>{
     if(products.some(x=>x.name===p.name))return;  // 已存在则跳过
     const newId=maxProdId+nProd+1;
     const lines=(p.lines||[]).map(l=>{const id=ingMap[l.ingName];return id?{ingId:id,qty:l.qty}:null;}).filter(Boolean);
     const packLines=(p.packLines||[]).map(l=>{const id=ingMap[l.pkName];return id?{ingId:id,qty:l.qty}:null;}).filter(Boolean);
+    const compLines=(p.components||[]).map(l=>{const id=compMap[l.compName];return id?{compId:id,qty:Number(l.qty)||1}:null;}).filter(Boolean);
     products.push({
       id:newId,name:p.name,cat:p.cat||'其他',date:p.date||'',status:'',
-      lines:[...lines,...packLines],compLines:[],price:p.price||0,dprice:p.dprice||0,
+      lines:[...lines,...packLines],compLines:compLines,price:p.price||0,dprice:p.dprice||0,
       comm:p.comm||0,scomm:p.scomm||0
     });
     nProd++;
   });
-  save();
-  renderIngredients();renderProducts();renderShop();renderOff();renderBin();renderProfit();
-  return {nIng,nPack,nProd,name:preset.name};
+  save();saveComponents();
+  renderIngredients();renderComponents();renderProducts();renderShop();renderOff();renderBin();renderProfit();
+  return {nIng,nPack,nComp,nProd,name:preset.name};
 }
 
 /* 导入预设数据 */
@@ -589,7 +673,8 @@ function importPreset(presetId){
   const preset=PRESETS.find(p=>p.id===presetId);
   if(!preset){showToast('预设不存在');return;}
   const res=applyPresetData(preset);
-  $('#io-info').textContent=`已导入预设「${res.name}」：${res.nIng} 种食材 + ${res.nPack} 种包材 + ${res.nProd} 个单品`;
+  const compInfo=res.nComp?` + ${res.nComp} 种配料` : '';
+  $('#io-info').textContent=`已导入预设「${res.name}」：${res.nIng} 种食材 + ${res.nPack} 种包材${compInfo} + ${res.nProd} 个单品`;
   showToast(`已导入「${res.name}」`);
 }
 
@@ -649,6 +734,78 @@ function importFormula1(text){
   const res=applyPresetData(preset);
   $('#io-info').textContent=`公式1导入完成：${res.nIng} 种食材 + ${res.nPack} 种包材 + ${res.nProd} 个单品`;
   showToast('公式1数据已导入');
+}
+
+/* ---------- 公式2：截图表格自动导入规则 ---------- */
+const FORMULA2_SCHEMA={
+  id:'formula2',
+  name:'公式2：食材+包材+配料+单品表格',
+  desc:'适用于「食材清单 + 包材清单 + 配料配比 + 单品配方」四区域截图/表格',
+  version:1,
+  fields:{
+    ingredient:['name','unitCost','weight','kj','fat'],
+    pack:['name','unitCost','count'],
+    component:['name','servings','lines'],
+    product:['name','components','packs']
+  },
+  formulas:[
+    '食材单价 = 进货单价 ÷ 克重',
+    '配料单份成本 = Σ(食材单价 × 用量) ÷ 可制作数量',
+    '单品总成本 = Σ(配料单份成本 × 数量) + Σ(包材单价 × 数量)',
+    '热量(kcal) = kJ ÷ 4.18（按单份用量自动累计）',
+    '脂肪(g) 按单份用量自动累计'
+  ]
+};
+
+/* 把符合公式2的原始数据转换成标准预设结构 */
+function buildFormula2Preset(raw){
+  const ingredients=(raw.ingredients||[]).map(it=>({
+    name:it.name, qty:Number(it.weight)||0, unit:'g',
+    cost:Number(it.unitCost)||0,
+    kj:Number(it.kj)||0, fat:Number(it.fat)||0,
+    type:'food'
+  }));
+  const packs=(raw.packs||[]).map(it=>({
+    name:it.name, qty:Number(it.count)||0, unit:'个',
+    cost:Number(it.unitCost)||0,
+    kj:0, fat:0, type:'pack'
+  }));
+  const components=(raw.components||[]).map(c=>({
+    name:c.name,
+    servings:Number(c.servings)||1,
+    lines:(c.lines||[]).map(x=>({ingName:x.name, qty:Number(x.qty)||0}))
+  }));
+  const products=(raw.products||[]).map(p=>({
+    name:p.name, cat:p.cat||'其他', date:p.date||'',
+    components:(p.components||[]).map(x=>({compName:x.name, qty:Number(x.qty)||1})),
+    packLines:(p.packs||[]).map(x=>({pkName:x.name, qty:Number(x.qty)||0})),
+    price:Number(p.price)||0, dprice:Number(p.dprice)||0,
+    comm:Number(p.comm)||0, scomm:Number(p.scomm)||0
+  }));
+  return {id:'formula2', name:'公式2导入数据', desc:'', ingredients, packs, components, products};
+}
+
+/* 解析公式2文本：支持 JSON */
+function parseFormula2(text){
+  text=(text||'').trim();
+  if(!text) throw new Error('请输入数据');
+  if(text.startsWith('{') || text.startsWith('[')){
+    try{
+      const obj=JSON.parse(text);
+      return Array.isArray(obj)?{ingredients:obj}:obj;
+    }catch(e){throw new Error('JSON 格式错误：'+e.message);}
+  }
+  throw new Error('目前公式2只支持 JSON 格式，请按示例粘贴');
+}
+
+/* 导入公式2数据（主入口） */
+function importFormula2(text){
+  const raw=parseFormula2(text);
+  const preset=buildFormula2Preset(raw);
+  const res=applyPresetData(preset);
+  const compInfo=res.nComp?` + ${res.nComp} 种配料` : '';
+  $('#io-info').textContent=`公式2导入完成：${res.nIng} 种食材 + ${res.nPack} 种包材${compInfo} + ${res.nProd} 个单品`;
+  showToast('公式2数据已导入');
 }
 
 /* 渲染预设卡片 */
@@ -1523,6 +1680,14 @@ $('#btn-formula1').onclick=()=>{$('#formula1-text').value='';$('#formula1-modal'
 $('#formula1-close').onclick=$('#formula1-cancel').onclick=()=>$('#formula1-modal').classList.remove('active');
 $('#formula1-ok').onclick=()=>{
   try{importFormula1($('#formula1-text').value);$('#formula1-modal').classList.remove('active');}
+  catch(e){showToast(e.message);}
+};
+
+/* ---------- 公式2导入按钮 ---------- */
+$('#btn-formula2').onclick=()=>{$('#formula2-text').value='';$('#formula2-modal').classList.add('active');};
+$('#formula2-close').onclick=$('#formula2-cancel').onclick=()=>$('#formula2-modal').classList.remove('active');
+$('#formula2-ok').onclick=()=>{
+  try{importFormula2($('#formula2-text').value);$('#formula2-modal').classList.remove('active');}
   catch(e){showToast(e.message);}
 };
 
