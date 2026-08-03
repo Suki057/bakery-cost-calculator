@@ -78,6 +78,10 @@
   .barwrap .val{width:110px;text-align:right;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
   .empty{padding:24px;text-align:center;color:var(--muted);font-size:13px}
   .delx{background:none;border:none;color:var(--danger);cursor:pointer;font-size:15px;line-height:1}
+  .preset-card{flex:1;min-width:180px;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;cursor:pointer;transition:.15s}
+  .preset-card:hover{border-color:var(--brand);box-shadow:var(--shadow)}
+  .preset-card b{display:block;font-size:13px;color:var(--brand-d);margin-bottom:4px}
+  .preset-card span{font-size:11px;color:var(--muted)}
   .pchead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px}
   .pcname{display:flex;align-items:center;gap:8px}
   .pcinfo{font-size:12px;color:var(--muted);margin-bottom:10px}
@@ -189,16 +193,24 @@
 
   <!-- ============ 产品下架 ============ -->
   <section class="panel" id="panel-off">
+    <!-- 数据相关（原数据保存，置前） -->
     <div class="card">
-      <h2><span class="dot"></span>数据保存</h2>
-      <div class="hint">点击「导出保存」把软件内的全部数据（进货清单、单品配方、下架产品、利润率记录）导出成一个文件存到手机；点击「导入恢复」选择该文件，软件会自动摄取并合并其中与软件相关的数据。</div>
-      <div class="row" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+      <h2><span class="dot"></span>数据相关</h2>
+      <div class="hint">点击「导出保存」把软件内的全部数据导出成文件；点击「导入恢复」选择文件合并数据。下方「预设数据」可一键导入示例数据包。</div>
+
+      <!-- 预设数据卡片 -->
+      <div id="preset-list" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+        <!-- JS 动态渲染 -->
+      </div>
+
+      <div class="row" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
         <button class="btn primary" id="btn-export">⬇ 导出保存</button>
         <button class="btn" id="btn-import">⬆ 导入恢复</button>
         <input type="file" id="file-import" accept="application/json,.json" style="display:none">
       </div>
       <div class="hint" id="io-info" style="margin-top:8px"></div>
     </div>
+    <!-- 产品下架（置后） -->
     <div class="card">
       <h2><span class="dot"></span>产品下架 <span class="muted" id="off-count" style="font-weight:400"></span></h2>
       <div class="hint">在这里下架的单品不会被删除，可随时「恢复」回到店铺单品继续在售。下架后不再计入在售统计。</div>
@@ -498,6 +510,91 @@ function seedComponents(ingredients){
   });
 }
 
+
+/* ---------- 预设数据包（可一键导入） ---------- */
+const PRESETS=[
+  {
+    id:'fastfood',
+    name:'🍱 快餐便当数据',
+    desc:'5种食材 + 3种包材 + 2个单品（香煎鸡胸肉时蔬盖饭、鸡胸肉蔬菜蛋炒饭）',
+    ingredients:[
+      {name:'大米',       qty:500,  unit:'g',  cost:3.8,   kj:1450, fat:0.8, type:'food'},
+      {name:'新鲜鸡胸肉', qty:1000, unit:'g',  cost:11,    kj:480,  fat:1.6, type:'food'},
+      {name:'鸡蛋',       qty:1000, unit:'g',  cost:14,    kj:590,  fat:8.8, type:'food'},
+      {name:'上海青',     qty:500,  unit:'g',  cost:3.5,   kj:85,   fat:0.2, type:'food'},
+      {name:'胡萝卜',     qty:500,  unit:'g',  cost:3.2,   kj:155,  fat:0.3, type:'food'}
+    ],
+    packs:[
+      {name:'圆形外卖餐盒', qty:50,  unit:'个', cost:25, type:'pack'},
+      {name:'一次性筷子套装',qty:100, unit:'套', cost:18, type:'pack'},
+      {name:'打包手提袋',   qty:200, unit:'袋', cost:16, type:'pack'}
+    ],
+    products:[
+      {
+        name:'香煎鸡胸肉时蔬盖饭', cat:'主食', date:'2026-08',
+        lines:[{ingName:'大米',qty:170},{ingName:'新鲜鸡胸肉',qty:120},{ingName:'胡萝卜',qty:40},{ingName:'上海青',qty:60},{ingName:'鸡蛋',qty:50}],
+        packLines:[{pkName:'圆形外卖餐盒',qty:1},{pkName:'一次性筷子套装',qty:1},{pkName:'打包手提袋',qty:1}],
+        price:22, dprice:20, comm:15, scomm:12
+      },
+      {
+        name:'鸡胸肉蔬菜蛋炒饭', cat:'主食', date:'2026-08',
+        lines:[{ingName:'大米',qty:115},{ingName:'新鲜鸡胸肉',qty:70},{ingName:'鸡蛋',qty:50},{ingName:'胡萝卜',qty:35},{ingName:'上海青',qty:45}],
+        packLines:[{pkName:'圆形外卖餐盒',qty:1},{pkName:'一次性筷子套装',qty:1},{pkName:'打包手提袋',qty:1}],
+        price:18, dprice:16, comm:13, scomm:10
+      }
+    ]
+  }
+];
+
+/* 导入预设数据（生成新ID避免冲突） */
+function importPreset(presetId){
+  const preset=PRESETS.find(p=>p.id===presetId);
+  if(!preset){showToast('预设不存在');return;}
+  const maxIngId=(ingredients.reduce((m,i)=>Math.max(m,i.id),0)||0);
+  const maxProdId=(products.reduce((m,p)=>Math.max(m,p.id),0)||0);
+  let nIng=0,nPack=0,nProd=0;
+  // 导入食材
+  const ingMap={};  // name -> new id
+  [...preset.ingredients,...preset.packs].forEach((s,idx)=>{
+    if(ingredients.some(i=>i.name===s.name))return;  // 已存在则跳过
+    const newId=maxIngId+nIng+1;
+    ingMap[s.name]=newId;
+    ingredients.push({id:newId,name:s.name,qty:s.qty,unit:s.unit,cost:s.cost,kj:s.kj||0,fat:s.fat||0,type:s.type});
+    s.type==='food'?nIng++:nPack++;
+  });
+  // 也把已有食材加入映射
+  ingredients.forEach(i=>{if(!ingMap[i.name])ingMap[i.name]=i.id;});
+  // 导入单品
+  preset.products.forEach(p=>{
+    if(products.some(x=>x.name===p.name))return;  // 已存在则跳过
+    const newId=maxProdId+nProd+1;
+    const lines=(p.lines||[]).map(l=>{const id=ingMap[l.ingName];return id?{ingId:id,qty:l.qty}:null;}).filter(Boolean);
+    const packLines=(p.packLines||[]).map(l=>{const id=ingMap[l.pkName];return id?{ingId:id,qty:l.qty}:null;}).filter(Boolean);
+    products.push({
+      id:newId,name:p.name,cat:p.cat||'其他',date:p.date||'',status:'',
+      lines:lines,compLines:[],price:p.price||0,dprice:p.dprice||0,
+      comm:p.comm||0,scomm:p.scomm||0
+    });
+    nProd++;
+  });
+  save();
+  renderIngredients();renderProducts();renderShop();renderOff();renderBin();renderProfit();
+  $('#io-info').textContent=`已导入预设「${preset.name}」：${nIng} 种食材 + ${nPack} 种包材 + ${nProd} 个单品`;
+  showToast(`已导入「${preset.name}」`);
+}
+
+/* 渲染预设卡片 */
+function renderPresets(){
+  const box=$('#preset-list');
+  box.innerHTML='';
+  PRESETS.forEach(p=>{
+    const card=document.createElement('div');
+    card.className='preset-card';
+    card.innerHTML=`<b>${p.name}</b><span>${p.desc}</span>`;
+    card.onclick=()=>importPreset(p.id);
+    box.appendChild(card);
+  });
+}
 
 /* ---------- 存储（版本号触发清空旧示例数据） ---------- */
 const LS_ING='bakery_ingredients', LS_PROD='bakery_products', LS_BIN='bakery_bin', LS_COMP='bakery_components', LS_VER='bakery_ver';
@@ -1362,7 +1459,7 @@ $('#btn-import').onclick=()=>$('#file-import').click();
 $('#file-import').onchange=e=>{const f=e.target.files[0];if(f)importData(f);e.target.value='';};
 
 /* ---------- 初始化 ---------- */
-renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderOff();renderComponents();updateRecipeStatus();
+renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderOff();renderComponents();updateRecipeStatus();renderPresets();
 
 /* ---------- PWA：注册 service worker，支持「添加到主屏幕 / 安装」 ---------- */
 if('serviceWorker' in navigator){
