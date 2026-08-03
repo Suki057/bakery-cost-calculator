@@ -6,3 +6,6 @@ _deploy/
 _t_io.js
 make_*.py
 _test*
+
+# 公式1示例数据（含具体价格，仅本地保留）
+formula1-example.json
