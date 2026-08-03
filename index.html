@@ -193,7 +193,14 @@
 
   <!-- ============ 产品下架 ============ -->
   <section class="panel" id="panel-off">
-    <!-- 数据相关（原数据保存，置前） -->
+    <!-- 产品下架（置前） -->
+    <div class="card">
+      <h2><span class="dot"></span>产品下架 <span class="muted" id="off-count" style="font-weight:400"></span></h2>
+      <div class="hint">在这里下架的单品不会被删除，可随时「恢复」回到店铺单品继续在售。下架后不再计入在售统计。</div>
+      <div id="off-list"></div>
+      <div class="empty" id="off-empty" style="display:none">还没有下架的产品。</div>
+    </div>
+    <!-- 数据相关（原数据保存，置后） -->
     <div class="card">
       <h2><span class="dot"></span>数据相关</h2>
       <div class="hint">点击「导出保存」把软件内的全部数据导出成文件；点击「导入恢复」选择文件合并数据。下方「预设数据」可一键导入示例数据包。</div>
@@ -209,13 +216,6 @@
         <input type="file" id="file-import" accept="application/json,.json" style="display:none">
       </div>
       <div class="hint" id="io-info" style="margin-top:8px"></div>
-    </div>
-    <!-- 产品下架（置后） -->
-    <div class="card">
-      <h2><span class="dot"></span>产品下架 <span class="muted" id="off-count" style="font-weight:400"></span></h2>
-      <div class="hint">在这里下架的单品不会被删除，可随时「恢复」回到店铺单品继续在售。下架后不再计入在售统计。</div>
-      <div id="off-list"></div>
-      <div class="empty" id="off-empty" style="display:none">还没有下架的产品。</div>
     </div>
   </section>
 
