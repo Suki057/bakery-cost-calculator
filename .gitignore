@@ -1,0 +1,8 @@
+# 个人数据与本地部署（含私有进货数据，不上传）
+.workbuddy/
+_deploy/
+
+# 临时/构建脚本
+_t_io.js
+make_*.py
+_test*
