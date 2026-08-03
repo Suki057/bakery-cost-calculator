@@ -516,6 +516,20 @@
   </div>
 </div>
 
+<!-- ============ 清空全部确认弹窗 ============ -->
+<div class="modal" id="confirm-clear-modal">
+  <div class="modal-box" style="width:min(360px,100%)">
+    <div class="modal-head">清空确认</div>
+    <div class="modal-body" style="text-align:center;font-size:15px;padding:24px 18px">
+      是否清空全部数据？<br><span style="font-size:13px;color:var(--muted)">所有食材、配料、单品将移入回收站，7天后自动清除</span>
+    </div>
+    <div class="modal-foot between">
+      <button class="btn primary" id="confirm-clear-ok">确定</button>
+      <button class="btn ghost" id="confirm-clear-cancel">取消</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ 公式1：截图表格导入弹窗 ============ -->
 <div class="modal" id="formula1-modal">
   <div class="modal-box" style="width:min(640px,100%)">
@@ -1563,20 +1577,21 @@ function updateProfitRow(p){
 }
 
 /* ---------- 清空全部：所有板块数据移入回收站，7天后自动清除 ---------- */
-$('#clear-all').onclick=()=>{
-  if(confirm('确定清空所有数据？所有食材、配料、单品将全部移入回收站，7天后自动永久清除（可到「⑥ 回收站」恢复）。此操作不可撤销。')){
-    const now=Date.now();
-    ingredients.forEach(i=>bin.push({id:binId(),type:'ingredient',data:{...i},deletedAt:now}));
-    components.forEach(c=>bin.push({id:binId(),type:'component',data:{...c},deletedAt:now}));
-    products.forEach(p=>bin.push({id:binId(),type:'product',data:{...p},deletedAt:now}));
-    ingredients=[];products=[];components=[];draftCompLines=[];draftLines=[];pendingIngType=null;ingTypeChosen=null;
-    ['dine','del','shan'].forEach(s=>localStorage.removeItem('bakery_'+s+'_meta'));
-    save();saveBin();saveComponents();
-    updateTypeChip();
-    renderIngredients();renderProducts();renderBin();renderProfit();renderComponents();renderShop();renderOff();
-    showToast('已全部移入回收站，可恢复；7天后自动清除');
-  }
-};
+function doClearAll(){
+  const now=Date.now();
+  ingredients.forEach(i=>bin.push({id:binId(),type:'ingredient',data:{...i},deletedAt:now}));
+  components.forEach(c=>bin.push({id:binId(),type:'component',data:{...c},deletedAt:now}));
+  products.forEach(p=>bin.push({id:binId(),type:'product',data:{...p},deletedAt:now}));
+  ingredients=[];products=[];components=[];draftCompLines=[];draftLines=[];pendingIngType=null;ingTypeChosen=null;
+  ['dine','del','shan'].forEach(s=>localStorage.removeItem('bakery_'+s+'_meta'));
+  save();saveBin();saveComponents();
+  updateTypeChip();
+  renderIngredients();renderProducts();renderBin();renderProfit();renderComponents();renderShop();renderOff();
+  showToast('已全部移入回收站，可恢复；7天后自动清除');
+}
+$('#clear-all').onclick=()=>{$('#confirm-clear-modal').classList.add('active');};
+$('#confirm-clear-ok').onclick=()=>{doClearAll();$('#confirm-clear-modal').classList.remove('active');};
+$('#confirm-clear-cancel').onclick=()=>{$('#confirm-clear-modal').classList.remove('active');};
 
 /* ---------- 美团统一扣点 ---------- */
 $('#global-comm').oninput=()=>{
