@@ -111,19 +111,25 @@
   .liqty input{width:90px}
   .addline{display:grid;grid-template-columns:1.6fr 1fr auto;gap:8px;align-items:end}
   .hint{font-size:12px;color:var(--muted);background:#faf4ea;border-left:3px solid var(--brand);
-    padding:8px 12px;border-radius:8px;margin-top:8px}
+    padding:8px 12px;border-radius:8px;margin:12px 0 14px}
   .recipebox{border:1px dashed var(--line);border-radius:12px;padding:12px;margin-top:10px;background:#fcf8f1}
   details summary{cursor:pointer;font-weight:600;color:var(--brand-d);font-size:13px;list-style:none}
   details summary::-webkit-details-marker{display:none}
   details summary:before{content:"▸ ";}
   details[open] summary:before{content:"▾ ";}
-  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   .search{flex:1;min-width:180px}
   .pinput{width:96px !important;text-align:right;display:inline-block}
   .tinput{width:92px;border:1px solid var(--line);border-radius:8px;padding:4px 8px;
     font-size:16px;font-weight:800;color:var(--brand-d);text-align:right;
     font-variant-numeric:tabular-nums;background:#fff;font-family:inherit}
   .tinput:focus{outline:none;border-color:var(--brand)}
+  /* 产品下架 / 回收站卡片头部：左侧信息 + 右侧操作按钮，保持一行 */
+  .prodhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:nowrap}
+  .prodhead .off-info,.prodhead .bin-info{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .prodhead .bin-ops{display:flex;gap:8px;flex-shrink:0}
+  .prodhead .tag{flex-shrink:0}
+  .prodhead button{flex-shrink:0}
   /* 店铺单品：统一紧凑行（与下架板块同尺寸） */
   .blist{}
   #shop-list{margin-top:24px}
@@ -171,6 +177,7 @@
   .ing-type-btn.sel{box-shadow:0 0 0 3px var(--brand-d);outline:none}
   #ing-type-chip{padding:2px 10px;border-radius:20px}
   .green-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#22c55e;margin-right:6px;vertical-align:middle;box-shadow:0 0 0 3px rgba(34,197,94,.18)}
+  #clear-all{white-space:nowrap;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -178,7 +185,6 @@
   <div style="font-size:24px">🥐</div>
   <div>
     <h1>烘焙店成本核算器</h1>
-    <div class="sub">录入食材 / 包材进货单价与用量 · 自动算出每个单品与分类的成本 / 利润</div>
   </div>
   <div class="spacer"></div>
   <button class="btn danger sm" id="clear-all"><span class="green-dot"></span>清空全部数据</button>
@@ -1402,9 +1408,9 @@ function renderOff(){
   offs.sort((a,b)=>b.id-a.id).forEach(p=>{
     const card=document.createElement('div');card.className='card';card.style.marginBottom='10px';
     card.innerHTML=`<div class="prodhead">
-      <div><span class="tag c3">已下架</span> <b style="font-size:15px">${p.name}</b>
+      <div class="off-info"><span class="tag c3">已下架</span> <b style="font-size:15px">${p.name}</b>
         <span class="muted" style="font-size:12px"> · ${p.cat} · ${Math.round(productCal(p))} kcal · 脂肪 ${Math.round(productFat(p))} g · 定价 ${yuan(pPrice(p))}</span></div>
-      <div><button class="btn ghost sm" data-act="restore" data-id="${p.id}">恢复</button></div>
+      <button class="btn ghost sm" data-act="restore" data-id="${p.id}">恢复</button>
     </div>`;
     list.appendChild(card);
   });
@@ -1430,12 +1436,12 @@ function renderBin(){
     const card=document.createElement('div');card.className='card';card.style.marginBottom='10px';
     card.innerHTML=`
       <div class="prodhead">
-        <div>
+        <div class="bin-info">
           <span class="tag ${tagCls}">${tagTxt}</span>
           <b style="font-size:15px">${name}</b>
           <span class="muted" style="font-size:12px"> · 剩余 ${daysLeft} 天自动清除</span>
         </div>
-        <div style="display:flex;gap:8px">
+        <div class="bin-ops">
           <button class="btn ghost sm" data-act="restore" data-id="${item.id}">恢复</button>
           <button class="btn danger sm" data-act="purge" data-id="${item.id}">永久删除</button>
         </div>
