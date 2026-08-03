@@ -239,9 +239,11 @@
         </div>
       </div>
       <div style="margin-top:8px;font-size:12px;color:var(--muted)">条目分类：<span id="ing-type-chip" class="tag" style="cursor:pointer">未选择（点击名称框）</span></div>
-      <div class="grid cols-3" style="margin-top:10px">
-        <div><label>热量（100g/KJ）</label><input id="ing-kj" type="number" min="0" step="any" placeholder="如：1460（每100g）"></div>
-        <div><label>脂肪（100g/g）</label><input id="ing-fat" type="number" min="0" step="any" placeholder="如：8（每100g）"></div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;align-items:flex-end">
+        <div id="ing-nutrition-row" style="display:flex;gap:10px;flex:1;min-width:260px">
+          <div style="flex:1"><label>热量（100g/KJ）</label><input id="ing-kj" type="number" min="0" step="any" placeholder="如：1460（每100g）"></div>
+          <div style="flex:1"><label>脂肪（100g/g）</label><input id="ing-fat" type="number" min="0" step="any" placeholder="如：8（每100g）"></div>
+        </div>
         <div><label>&nbsp;</label><button class="btn" id="ing-add">＋ 添加</button></div>
       </div>
     </div>
@@ -265,7 +267,6 @@
       <table>
         <thead><tr>
           <th>包材</th>
-          <th class="num">热量(kcal)</th><th class="num">脂肪(g)</th>
           <th class="num">单价(元/g)</th>
           <th></th>
         </tr></thead>
@@ -744,18 +745,20 @@ function renderIngredients(){
   $('#ing-count-pack').textContent=pack.length?`（共 ${pack.length} 种）`:'';
   $('#ing-empty-food').style.display=food.length?'none':'block';
   $('#ing-empty-pack').style.display=pack.length?'none':'block';
-  const mkRow=(i)=>{
+  const mkRow=(i, withNutrition)=>{
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td><b>${i.name}</b></td>
-      <td class="num">${Math.round((i.kj||0)/KJ2KCAL)}</td>
-      <td class="num">${i.fat||0}</td>
-      <td class="num">${fmtPrice(unitPricePerG(i))}</td>
+    let html=`<td><b>${i.name}</b></td>`;
+    if(withNutrition){
+      html+=`<td class="num">${Math.round((i.kj||0)/KJ2KCAL)}</td>\n      <td class="num">${i.fat||0}</td>`;
+    }
+    html+=`<td class="num">${fmtPrice(unitPricePerG(i))}</td>
       <td style="text-align:right"><button class="delx" title="删除">✕</button></td>`;
+    tr.innerHTML=html;
     tr.querySelector('.delx').onclick=()=>deleteIngredient(i);
     return tr;
   };
-  food.forEach(i=>tbF.appendChild(mkRow(i)));
-  pack.forEach(i=>tbP.appendChild(mkRow(i)));
+  food.forEach(i=>tbF.appendChild(mkRow(i, true)));
+  pack.forEach(i=>tbP.appendChild(mkRow(i, false)));
 }
 $('#ing-add').onclick=()=>{
   if(pendingIngType===null){showToast('请先点「食材/包材名称」框选择分类（食材 / 包材）');return;}
@@ -786,9 +789,10 @@ let pendingIngType=null;     // 当前待添加的条目分类：'food' / 'pack'
 let ingTypeChosen=null;      // 弹窗中临时选中的分类
 function updateTypeChip(){
   const chip=$('#ing-type-chip');if(!chip)return;
-  if(pendingIngType==='food'){chip.textContent='🥬 食材';chip.className='tag c2';}
-  else if(pendingIngType==='pack'){chip.textContent='📦 包材';chip.className='tag c3';}
-  else {chip.textContent='未选择（点击名称框）';chip.className='tag';}
+  const nut=$('#ing-nutrition-row');
+  if(pendingIngType==='food'){chip.textContent='🥬 食材';chip.className='tag c2';if(nut)nut.style.display='flex';}
+  else if(pendingIngType==='pack'){chip.textContent='📦 包材';chip.className='tag c3';if(nut)nut.style.display='none';}
+  else {chip.textContent='未选择（点击名称框）';chip.className='tag';if(nut)nut.style.display='flex';}
   chip.style.cursor='pointer';
 }
 function openIngTypeModal(){
