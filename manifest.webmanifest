@@ -1,0 +1,17 @@
+{
+  "name": "烘焙店成本核算器",
+  "short_name": "烘焙成本",
+  "description": "单文件 HTML 烘焙成本计算器：进货清单 / 包材分类 / 组成部分 / 单价0舍1入",
+  "lang": "zh-CN",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fbf7f0",
+  "theme_color": "#e8a04b",
+  "icons": [
+    { "src": "./app-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ]
+}
