@@ -149,8 +149,10 @@
   .modal-foot{padding:14px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
   .modal-lines{margin-bottom:12px}
   .modal-cal{margin:10px 0 4px;font-size:13px;color:#444;background:#f6f8fa;padding:8px 10px;border-radius:8px}
-  .modal-line{display:flex;justify-content:space-between;align-items:center;padding:9px 11px;
+  .modal-line{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:9px 11px;
     background:#fcf8f1;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px}
+  .modal-line .ln-label{flex:1;display:flex;align-items:center;gap:8px;min-width:0}
+  .modal-line .qty-group{display:flex;align-items:center;gap:12px;white-space:nowrap;flex:0 0 auto}
   .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(8px);
     background:#3a2f25;color:#fff;padding:10px 18px;border-radius:24px;font-size:13px;
     box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:99;opacity:0;transition:.25s;pointer-events:none}
@@ -288,8 +290,8 @@
         </div>
       </div>
       <div class="grid cols-2" style="margin-top:10px">
-        <div><label>&nbsp;</label><button class="btn ghost" id="comp-pick">🧩 选择配料配比</button></div>
-        <div><label>&nbsp;</label><button class="btn" id="ing-pick">📦 添加包材库</button></div>
+        <div><label>&nbsp;</label><button class="btn ghost" id="comp-pick">🧩 选择配料</button></div>
+        <div><label>&nbsp;</label><button class="btn" id="ing-pick">📦 添加包材</button></div>
       </div>
       <div style="display:flex;justify-content:flex-end;margin-top:12px">
         <button class="btn" id="prod-add">✓ 确认添加</button>
@@ -311,7 +313,7 @@
       <div class="hint">配料配比是「单品」的拼装单元，例如一个舒芙蕾 = 舒芙蕾胚 + 奶盖 + 小料 + 勺子 + 打包盒。在这里先建好每个部分，并填好它使用的<b>食材与用量</b>；之后在「③ 单品配方」里只要多选这些部分（可填数量）即可组成单品，无需再一个个选食材。</div>
       <div class="grid cols-2" style="margin-top:12px">
         <div><label>配料配比名称</label><input id="comp-name" placeholder="如：舒芙蕾胚"></div>
-        <div><label>&nbsp;</label><button class="btn" id="comp-add">＋ 添加配料配比</button></div>
+        <div><label>&nbsp;</label><button class="btn" id="comp-add">＋ 添加配料</button></div>
       </div>
     </div>
     <div class="card">
@@ -410,7 +412,7 @@
 <div class="modal" id="comp-modal">
   <div class="modal-box">
     <div class="modal-head">
-      <span>选择配料配比：<span id="comp-modal-target"></span></span>
+      <span>选择配料：<span id="comp-modal-target"></span></span>
       <span class="delx" id="comp-modal-close" title="关闭">✕</span>
     </div>
     <div class="modal-body">
@@ -833,12 +835,12 @@ function openCompModal(target){
     components.forEach(c=>{
       const qty=map.get(String(c.id))||0;
       const div=document.createElement('div');div.className='modal-line';
-      div.innerHTML=`<label style="display:flex;align-items:center;gap:8px;flex:1;cursor:pointer">
+      div.innerHTML=`<label class="ln-label" style="cursor:pointer">
           <input type="checkbox" class="cmpick" data-id="${c.id}" ${qty>0?'checked':''}>
           <span><b>${c.name}</b> <span class="muted">${yuan(componentCost(c))} · ${Math.round(componentWeight(c))}g</span></span>
         </label>
-        <span class="muted">数量</span>
-        <input type="number" min="0" step="any" value="${qty>0?qty:1}" class="compqty" data-id="${c.id}" style="width:72px" ${qty>0?'':'disabled'}>`;
+        <span class="qty-group"><span class="muted">数量</span>
+        <input type="number" min="0" step="any" value="${qty>0?qty:1}" class="compqty" data-id="${c.id}" style="width:72px" ${qty>0?'':'disabled'}></span>`;
       const chk=div.querySelector('.cmpick');
       const qin=div.querySelector('.compqty');
       chk.onchange=()=>{ qin.disabled=!chk.checked; if(chk.checked && !qin.value) qin.value=1; };
@@ -890,12 +892,12 @@ function openIngModal(target){
     list.forEach(i=>{
       const qty=map.get(String(i.id))||0;
       const div=document.createElement('div');div.className='modal-line';
-      div.innerHTML=`<label style="display:flex;align-items:center;gap:8px;flex:1;cursor:pointer">
+      div.innerHTML=`<label class="ln-label" style="cursor:pointer">
           <input type="checkbox" class="ingpick" data-id="${i.id}" ${qty>0?'checked':''}>
           <span><b>${i.name}</b> <span class="muted">${fmtPrice(unitPricePerG(i))} 元/g · ${i.unit}</span></span>
         </label>
-        <span class="muted">用量</span>
-        <input type="number" min="0" step="any" value="${qty>0?qty:1}" class="ingqty" data-id="${i.id}" style="width:72px" ${qty>0?'':'disabled'}>`;
+        <span class="qty-group"><span class="muted">用量</span>
+        <input type="number" min="0" step="any" value="${qty>0?qty:1}" class="ingqty" data-id="${i.id}" style="width:72px" ${qty>0?'':'disabled'}></span>`;
       const chk=div.querySelector('.ingpick');
       const qin=div.querySelector('.ingqty');
       chk.onchange=()=>{ qin.disabled=!chk.checked; if(chk.checked && !qin.value) qin.value=1; };
@@ -933,7 +935,7 @@ function updateRecipeStatus(){
     el.innerHTML=`配料配比状态：已选 <b>${n}</b> 个部分，单份成本 <b>${yuan(cost)}</b>。点「＋ 添加单品」即生成到下方。`;
     el.style.background='#eef5e9';el.style.borderLeftColor='var(--accent)';
   }else{
-    el.innerHTML='配料配比状态：未选择部分。填好名称和分类后，点「🧩 选择配料配比」勾选组成单品的部分即可。';
+    el.innerHTML='配料配比状态：未选择部分。填好名称和分类后，点「🧩 选择配料」勾选组成单品的部分即可。';
     el.style.background='#faf4ea';el.style.borderLeftColor='var(--brand)';
   }
 }
@@ -1148,7 +1150,7 @@ $('#prod-add').onclick=()=>{
   const name=$('#prod-name').value.trim();
   const cat=$('#prod-cat').value;
   if(!name){showToast('请填写单品名称');return;}
-  if(!draftCompLines.length && !draftLines.length){showToast('请先点「🧩 选择配料配比」或「📦 添加包材库」选择组成单品的内容');return;}
+  if(!draftCompLines.length && !draftLines.length){showToast('请先点「🧩 选择配料」或「📦 添加包材」选择组成单品的内容');return;}
   const id=(products.reduce((m,x)=>Math.max(m,x.id),0)||0)+1;
   const date=$('#prod-date').value||'';
   products.push({id,name,cat,lines:draftLines.slice(),compLines:draftCompLines.slice(),price:0,dprice:0,comm:0.2,scomm:0.2,
