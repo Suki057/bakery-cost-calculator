@@ -224,7 +224,7 @@
     <div class="card">
       <h2><span class="dot"></span>添加 / 编辑（食材 · 包材）</h2>
       <div class="hint">填「食材/包材名称 + 进货单价 + 单份重量(默认g) + 单位」。先点名称框选「食材 / 包材」分类，再填名称；下方清单会自动算出 <b>单价(元/g)=进货单价÷单份重量</b>，配方成本即按用量×此单价累计。</div>
-      <div class="hint" style="margin-top:4px">「100g 热量(kJ) / 100g 脂肪(g)」按营养标签惯例填<b>每 100g（或每 100ml）</b>的数值；清单里热量会自动换算成 kcal（÷4.18），制作配方时再按用量累计成单品的 kcal 与脂肪。</div>
+      <div class="hint" style="margin-top:4px">「热量（100g/KJ） / 脂肪（100g/g）」按营养标签惯例填<b>每 100g（或每 100ml）</b>的数值；清单里热量会自动换算成 kcal（÷4.18），制作配方时再按用量累计成单品的 kcal 与脂肪。</div>
       <div class="grid cols-4" style="margin-top:12px">
         <div><label>食材/包材名称</label><input id="ing-name" placeholder="如：高筋面粉 / 打包盒"></div>
         <div><label>进货单价（元）</label><input id="ing-cost" type="number" min="0" step="any" placeholder="如：8（每kg）"></div>
@@ -238,8 +238,8 @@
       </div>
       <div style="margin-top:8px;font-size:12px;color:var(--muted)">条目分类：<span id="ing-type-chip" class="tag" style="cursor:pointer">未选择（点击名称框）</span></div>
       <div class="grid cols-3" style="margin-top:10px">
-        <div><label>100g 热量(kJ)</label><input id="ing-kj" type="number" min="0" step="any" placeholder="如：1460（每100g）"></div>
-        <div><label>100g 脂肪(g)</label><input id="ing-fat" type="number" min="0" step="any" placeholder="如：8（每100g）"></div>
+        <div><label>热量（100g/KJ）</label><input id="ing-kj" type="number" min="0" step="any" placeholder="如：1460（每100g）"></div>
+        <div><label>脂肪（100g/g）</label><input id="ing-fat" type="number" min="0" step="any" placeholder="如：8（每100g）"></div>
         <div><label>&nbsp;</label><button class="btn" id="ing-add">＋ 添加</button></div>
       </div>
     </div>
