@@ -93,7 +93,7 @@
   .recipe-details[open] summary:before{content:"▾ "}
   .recipe-details[open] summary{border-radius:11px 11px 0 0;border-bottom:1px solid var(--line)}
   .recipe-details[open] .recipebox{border:none;border-radius:0 0 11px 11px}
-  /* 组成部分库：食材与用量可收缩 */
+  /* 配料配比库：食材与用量可收缩 */
   .comp-details{border:1px solid var(--line);border-radius:11px;overflow:hidden;background:#fff;margin-top:6px}
   .comp-details summary{cursor:pointer;font-weight:600;color:var(--brand-d);font-size:13px;list-style:none;padding:10px 14px;background:#faf4ea;user-select:none}
   .comp-details summary::-webkit-details-marker{display:none}
@@ -175,7 +175,7 @@
     <div class="tab active" data-tab="shop">① 店铺单品</div>
     <div class="tab" data-tab="ing">② 进货清单</div>
     <div class="tab" data-tab="prod">③ 单品配方</div>
-    <div class="tab" data-tab="comp">④ 组成部分</div>
+    <div class="tab" data-tab="comp">④ 配料配比</div>
     <div class="tab" data-tab="profit">⑤ 利润率</div>
     <div class="tab" data-tab="bin">⑥ 回收站</div>
     <div class="tab" data-tab="off">⑦ 产品下架</div>
@@ -288,7 +288,7 @@
         </div>
       </div>
       <div class="grid cols-2" style="margin-top:10px">
-        <div><label>&nbsp;</label><button class="btn ghost" id="comp-pick">🧩 选择组成部分</button></div>
+        <div><label>&nbsp;</label><button class="btn ghost" id="comp-pick">🧩 选择配料配比</button></div>
         <div><label>&nbsp;</label><button class="btn" id="ing-pick">📦 添加包材库</button></div>
       </div>
       <div style="display:flex;justify-content:flex-end;margin-top:12px">
@@ -304,20 +304,20 @@
     </div>
   </section>
 
-  <!-- ============ 组成部分 ============ -->
+  <!-- ============ 配料配比 ============ -->
   <section class="panel" id="panel-comp">
     <div class="card">
-      <h2><span class="dot"></span>新建组成部分</h2>
-      <div class="hint">组成部分是「单品」的拼装单元，例如一个舒芙蕾 = 舒芙蕾胚 + 奶盖 + 小料 + 勺子 + 打包盒。在这里先建好每个部分，并填好它使用的<b>食材与用量</b>；之后在「③ 单品配方」里只要多选这些部分（可填数量）即可组成单品，无需再一个个选食材。</div>
+      <h2><span class="dot"></span>新建配料配比</h2>
+      <div class="hint">配料配比是「单品」的拼装单元，例如一个舒芙蕾 = 舒芙蕾胚 + 奶盖 + 小料 + 勺子 + 打包盒。在这里先建好每个部分，并填好它使用的<b>食材与用量</b>；之后在「③ 单品配方」里只要多选这些部分（可填数量）即可组成单品，无需再一个个选食材。</div>
       <div class="grid cols-2" style="margin-top:12px">
-        <div><label>组成部分名称</label><input id="comp-name" placeholder="如：舒芙蕾胚"></div>
-        <div><label>&nbsp;</label><button class="btn" id="comp-add">＋ 添加组成部分</button></div>
+        <div><label>配料配比名称</label><input id="comp-name" placeholder="如：舒芙蕾胚"></div>
+        <div><label>&nbsp;</label><button class="btn" id="comp-add">＋ 添加配料配比</button></div>
       </div>
     </div>
     <div class="card">
-      <h2><span class="dot"></span>组成部分库 <span class="muted" id="comp-count" style="font-weight:400"></span></h2>
+      <h2><span class="dot"></span>配料配比库 <span class="muted" id="comp-count" style="font-weight:400"></span></h2>
       <div id="comp-list"></div>
-      <div class="empty" id="comp-empty" style="display:none">还没有组成部分，先在上面添加一个。</div>
+      <div class="empty" id="comp-empty" style="display:none">还没有配料配比，先在上面添加一个。</div>
     </div>
   </section>
 
@@ -410,7 +410,7 @@
 <div class="modal" id="comp-modal">
   <div class="modal-box">
     <div class="modal-head">
-      <span>选择组成部分：<span id="comp-modal-target"></span></span>
+      <span>选择配料配比：<span id="comp-modal-target"></span></span>
       <span class="delx" id="comp-modal-close" title="关闭">✕</span>
     </div>
     <div class="modal-body">
@@ -426,11 +426,11 @@
 <div class="modal" id="comp-edit-modal">
   <div class="modal-box">
     <div class="modal-head">
-      <span>组成部分食材：<span id="comp-edit-name"></span></span>
+      <span>配料配比食材：<span id="comp-edit-name"></span></span>
       <span class="delx" id="comp-edit-close" title="关闭">✕</span>
     </div>
     <div class="modal-body">
-      <div class="hint" style="margin-bottom:12px">为该组成部分添加使用的食材与用量，点右下角「确定」保存到组成部分库。</div>
+      <div class="hint" style="margin-bottom:12px">为该配料配比添加使用的食材与用量，点右下角「确定」保存到配料配比库。</div>
       <div class="modal-lines" id="comp-edit-lines"></div>
       <div class="addline">
         <select id="comp-edit-ing"><option value="">＋ 选择食材…</option></select>
@@ -530,15 +530,16 @@ function importPreset(presetId){
   if(!preset){showToast('预设不存在');return;}
   const maxIngId=(ingredients.reduce((m,i)=>Math.max(m,i.id),0)||0);
   const maxProdId=(products.reduce((m,p)=>Math.max(m,p.id),0)||0);
-  let nIng=0,nPack=0,nProd=0;
+  let nIng=0,nPack=0,nProd=0,nAdded=0;
   // 导入食材
   const ingMap={};  // name -> new id
   [...preset.ingredients,...preset.packs].forEach((s,idx)=>{
     if(ingredients.some(i=>i.name===s.name))return;  // 已存在则跳过
-    const newId=maxIngId+nIng+1;
+    const newId=maxIngId+nAdded+1;
     ingMap[s.name]=newId;
     ingredients.push({id:newId,name:s.name,qty:s.qty,unit:s.unit,cost:s.cost,kj:s.kj||0,fat:s.fat||0,type:s.type});
     s.type==='food'?nIng++:nPack++;
+    nAdded++;
   });
   // 也把已有食材加入映射
   ingredients.forEach(i=>{if(!ingMap[i.name])ingMap[i.name]=i.id;});
@@ -550,7 +551,7 @@ function importPreset(presetId){
     const packLines=(p.packLines||[]).map(l=>{const id=ingMap[l.pkName];return id?{ingId:id,qty:l.qty}:null;}).filter(Boolean);
     products.push({
       id:newId,name:p.name,cat:p.cat||'其他',date:p.date||'',status:'',
-      lines:lines,compLines:[],price:p.price||0,dprice:p.dprice||0,
+      lines:[...lines,...packLines],compLines:[],price:p.price||0,dprice:p.dprice||0,
       comm:p.comm||0,scomm:p.scomm||0
     });
     nProd++;
@@ -637,7 +638,7 @@ function importData(file){
     }
     save();saveBin();
     renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderOff();renderComponents();updateRecipeStatus();
-    $('#io-info').textContent=`已导入并合并：${nIng} 个食材 / ${nProd} 个单品 / ${nComp} 个组成部分 / ${nBin} 个下架项`;
+    $('#io-info').textContent=`已导入并合并：${nIng} 个食材 / ${nProd} 个单品 / ${nComp} 个配料配比 / ${nBin} 个下架项`;
     showToast('数据已导入恢复');
   };
   reader.onerror=()=>showToast('读取文件失败');
@@ -698,13 +699,13 @@ function productFat(p){
   const fromComp=(p.compLines||[]).reduce((s,l)=>{const c=compById(l.compId);return s+(c?componentFat(c)*l.qty:0);},0);
   return fromIng+fromComp;
 }
-/* ---------- 组成部分（单品的拼装单元，自身也是食材行集合） ---------- */
+/* ---------- 配料配比（单品的拼装单元，自身也是食材行集合） ---------- */
 function compById(id){return components.find(c=>c.id==id);}
 function componentCost(c){return (c.lines||[]).reduce((s,l)=>s+lineCost(l),0);}
 function componentWeight(c){return (c.lines||[]).reduce((s,l)=>{const i=ingById(l.ingId);return s+(i?l.qty*massFactor(i.unit):0);},0);}
 function componentCal(c){return (c.lines||[]).reduce((s,l)=>s+lineKcal(l),0);}
 function componentFat(c){return (c.lines||[]).reduce((s,l)=>s+lineFat(l),0);}
-/* 单品使用的食材项数 = 直接食材行数 + 各组成部分的食材行数 */
+/* 单品使用的食材项数 = 直接食材行数 + 各配料配比的食材行数 */
 function productIngredientCount(p){
   let n=(p.lines||[]).length;
   (p.compLines||[]).forEach(l=>{const c=compById(l.compId);n+=(c&&c.lines)?c.lines.length:0;});
@@ -809,12 +810,12 @@ $('#ing-type-ok').onclick=()=>{
   $('#ing-name').focus();
 };
 
-/* ---------- 单品配方：组成部分选择（弹窗） ---------- */
-let draftCompLines=[];   // 新建单品时，弹窗里已选的组成部分（尚未提交）
+/* ---------- 单品配方：配料配比选择（弹窗） ---------- */
+let draftCompLines=[];   // 新建单品时，弹窗里已选的配料配比（尚未提交）
 let draftLines=[];       // 新建单品时，弹窗里已选的食材（尚未提交）
 let compModalTarget=null; // {type:'new'} 或 {type:'product',id}
 
-/* 组成部分选择弹窗：列出所有组成部分，勾选并设置数量 */
+/* 配料配比选择弹窗：列出所有配料配比，勾选并设置数量 */
 function openCompModal(target){
   compModalTarget=target;
   const cur = target.type==='product'
@@ -827,7 +828,7 @@ function openCompModal(target){
   const box=$('#comp-modal-lines');box.innerHTML='';
   $('#comp-modal-note').textContent='勾选组成单品的部分，并在「数量」里填使用个数（默认 1，如用 2 个勺子）。';
   if(!components.length){
-    box.innerHTML='<div class="muted" style="font-size:12px;padding:4px 0">还没有组成部分，请先到「④ 组成部分」里建好（如舒芙蕾胚、奶盖、小料、勺子、打包盒）。</div>';
+    box.innerHTML='<div class="muted" style="font-size:12px;padding:4px 0">还没有配料配比，请先到「④ 配料配比」里建好（如舒芙蕾胚、奶盖、小料、勺子、打包盒）。</div>';
   }else{
     components.forEach(c=>{
       const qty=map.get(String(c.id))||0;
@@ -858,7 +859,7 @@ $('#comp-modal-save').onclick=()=>{
   });
   if(compModalTarget.type==='product'){
     const p=products.find(x=>x.id==compModalTarget.id);
-    if(p){ p.compLines=picks; save(); renderProducts(); renderShop(); showToast('已更新组成部分'); }
+    if(p){ p.compLines=picks; save(); renderProducts(); renderShop(); showToast('已更新配料配比'); }
   }else{
     draftCompLines=picks; updateRecipeStatus();
   }
@@ -923,21 +924,21 @@ $('#ing-modal-save').onclick=()=>{
 };
 $('#ing-pick').onclick=()=>openIngModal({type:'new'});
 
-/* 配方绑定状态提示：反映已选的组成部分 */
+/* 配方绑定状态提示：反映已选的配料配比 */
 function updateRecipeStatus(){
   const el=$('#recipe-status');if(!el)return;
   const n=draftCompLines.length;
   if(n){
     const cost=draftCompLines.reduce((s,l)=>{const c=compById(l.compId);return s+(c?componentCost(c)*l.qty:0);},0);
-    el.innerHTML=`组成部分状态：已选 <b>${n}</b> 个部分，单份成本 <b>${yuan(cost)}</b>。点「＋ 添加单品」即生成到下方。`;
+    el.innerHTML=`配料配比状态：已选 <b>${n}</b> 个部分，单份成本 <b>${yuan(cost)}</b>。点「＋ 添加单品」即生成到下方。`;
     el.style.background='#eef5e9';el.style.borderLeftColor='var(--accent)';
   }else{
-    el.innerHTML='组成部分状态：未选择部分。填好名称和分类后，点「🧩 选择组成部分」勾选组成单品的部分即可。';
+    el.innerHTML='配料配比状态：未选择部分。填好名称和分类后，点「🧩 选择配料配比」勾选组成单品的部分即可。';
     el.style.background='#faf4ea';el.style.borderLeftColor='var(--brand)';
   }
 }
 
-/* ---------- 组成部分库（CRUD + 食材行内编辑） ---------- */
+/* ---------- 配料配比库（CRUD + 食材行内编辑） ---------- */
 function renderComponents(){
   const list=$('#comp-list');list.innerHTML='';
   $('#comp-count').textContent=components.length?`（共 ${components.length} 个）`:'';
@@ -992,7 +993,7 @@ function renderComponents(){
       saveComponents();renderComponents();renderProducts();renderShop();
     };
     card.querySelector('[data-act="delcomp"]').onclick=()=>{
-      if(!confirm(`删除组成部分「${c.name}」？已引用它的单品会同步移除该部分。`))return;
+      if(!confirm(`删除配料配比「${c.name}」？已引用它的单品会同步移除该部分。`))return;
       components=components.filter(x=>x.id!=c.id);
       products.forEach(p=>{ if(p.compLines) p.compLines=p.compLines.filter(l=>l.compId!=c.id); });
       saveComponents();renderComponents();renderProducts();renderShop();
@@ -1000,8 +1001,8 @@ function renderComponents(){
     };
   });
 }
-/* ---------- 新建组成部分：弹窗内填写食材与用量 ---------- */
-let compDraft=[];        // 弹窗里正在编辑的该组成部分食材行
+/* ---------- 新建配料配比：弹窗内填写食材与用量 ---------- */
+let compDraft=[];        // 弹窗里正在编辑的该配料配比食材行
 let compDraftName='';
 function renderCompEditLines(){
   const box=$('#comp-edit-lines');box.innerHTML='';
@@ -1017,7 +1018,7 @@ function renderCompEditLines(){
 }
 function openCompEdit(){
   const name=$('#comp-name').value.trim();
-  if(!name){showToast('请填写组成部分名称');return;}
+  if(!name){showToast('请填写配料配比名称');return;}
   compDraftName=name;
   compDraft=[];
   $('#comp-edit-name').textContent=name;
@@ -1059,9 +1060,9 @@ function renderProducts(){
     card.className='card';card.style.marginBottom='12px';
     const compHtml=(p.compLines&&p.compLines.length)?`
       <details class="recipe-details">
-        <summary>组成部分（${p.compLines.length}）</summary>
+        <summary>配料配比（${p.compLines.length}）</summary>
         <div id="comps-${p.id}" class="lines"></div>
-        <div class="addline"><button class="btn sm" data-act="addcomp" data-id="${p.id}">＋ 加组成部分</button></div>
+        <div class="addline"><button class="btn sm" data-act="addcomp" data-id="${p.id}">＋ 加配料配比</button></div>
       </details>`:'';
     const ingHtml=(p.lines&&p.lines.length)?`
       <details class="recipe-details">
@@ -1087,7 +1088,7 @@ function renderProducts(){
       ${ingHtml}`;
     list.appendChild(card);
 
-    /* 组成部分 section */
+    /* 配料配比 section */
     if(p.compLines&&p.compLines.length){
       const cb=$('#comps-'+p.id);
       p.compLines.forEach((l,idx)=>{
@@ -1147,7 +1148,7 @@ $('#prod-add').onclick=()=>{
   const name=$('#prod-name').value.trim();
   const cat=$('#prod-cat').value;
   if(!name){showToast('请填写单品名称');return;}
-  if(!draftCompLines.length && !draftLines.length){showToast('请先点「🧩 选择组成部分」或「📦 添加包材库」选择组成单品的内容');return;}
+  if(!draftCompLines.length && !draftLines.length){showToast('请先点「🧩 选择配料配比」或「📦 添加包材库」选择组成单品的内容');return;}
   const id=(products.reduce((m,x)=>Math.max(m,x.id),0)||0)+1;
   const date=$('#prod-date').value||'';
   products.push({id,name,cat,lines:draftLines.slice(),compLines:draftCompLines.slice(),price:0,dprice:0,comm:0.2,scomm:0.2,
