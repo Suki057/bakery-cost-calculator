@@ -486,29 +486,7 @@
 
 <script>
 /* ---------- 内置示例进货数据（食材 + 包材） ---------- */
-const SEED_STOCK=[];
-function seedIngredients(){
-  return SEED_STOCK.map((s,idx)=>({
-    id:idx+1, name:s.name, qty:s.qty, unit:s.unit,
-    cost:s.cost, kj:0, fat:0, type:s.type
-  }));
-}
 
-/* ---------- 内置示例组成部分（舒芙蕾胚 / 奶盖 / 黑糖珍珠） ---------- */
-const SEED_COMPONENTS=[];
-/* 将名称匹配转为 ingId（依赖 ingredients 已加载） */
-function seedComponents(ingredients){
-  const name2id=new Map();
-  ingredients.forEach(i=>name2id.set(i.name,i.id));
-  let nextId=(components.reduce((m,c)=>Math.max(m,c.id),0)||0);
-  return SEED_COMPONENTS.map(c=>{
-    nextId++;
-    const lines=c.lines
-      .map(l=>{const id=name2id.get(l.ingName);return id?{ingId:id,qty:l.qty}:null;})
-      .filter(Boolean);
-    return{id:nextId,name:c.name,lines};
-  });
-}
 
 
 /* ---------- 预设数据包（可一键导入） ---------- */
@@ -603,21 +581,10 @@ if(localStorage.getItem(LS_VER)!==String(APP_VER)){
   localStorage.removeItem(LS_ING);localStorage.removeItem(LS_PROD);localStorage.removeItem(LS_BIN);localStorage.removeItem(LS_COMP);
   localStorage.setItem(LS_VER,String(APP_VER));
 }
-let ingredients=JSON.parse(localStorage.getItem(LS_ING));
+let ingredients=JSON.parse(localStorage.getItem(LS_ING)||'[]');
 let products=JSON.parse(localStorage.getItem(LS_PROD)||'[]');
 let bin=JSON.parse(localStorage.getItem(LS_BIN)||'[]');
 let components=JSON.parse(localStorage.getItem(LS_COMP)||'[]');
-/* 进货清单为空时，自动填充内置示例数据（食材+包材），仅首次 */
-if((!ingredients||ingredients.length===0) && !localStorage.getItem('bakery_seeded')){
-  ingredients=seedIngredients();
-  localStorage.setItem(LS_ING,JSON.stringify(ingredients));
-  /* 组成部分也一并内置 */
-  components=seedComponents(ingredients);
-  if(components.length){
-    localStorage.setItem(LS_COMP,JSON.stringify(components));
-  }
-  localStorage.setItem('bakery_seeded','1');
-}
 
 /* 回收站自动清除：超过 10 天的项永久删除 */
 const TEN_DAYS=10*24*60*60*1000;
