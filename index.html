@@ -175,7 +175,7 @@
     <div class="tab active" data-tab="shop">① 店铺单品</div>
     <div class="tab" data-tab="ing">② 进货清单</div>
     <div class="tab" data-tab="prod">③ 单品配方</div>
-    <div class="tab" data-tab="comp">④ 配料配比</div>
+    <div class="tab" data-tab="comp">④ 配料成本</div>
     <div class="tab" data-tab="profit">⑤ 利润率</div>
     <div class="tab" data-tab="bin">⑥ 回收站</div>
     <div class="tab" data-tab="off">⑦ 产品下架</div>
@@ -426,7 +426,7 @@
 <div class="modal" id="comp-edit-modal">
   <div class="modal-box">
     <div class="modal-head">
-      <span>配料配比食材：<span id="comp-edit-name"></span></span>
+      <span>配料：<span id="comp-edit-name"></span></span>
       <span class="delx" id="comp-edit-close" title="关闭">✕</span>
     </div>
     <div class="modal-body">
@@ -828,7 +828,7 @@ function openCompModal(target){
   const box=$('#comp-modal-lines');box.innerHTML='';
   $('#comp-modal-note').textContent='勾选组成单品的部分，并在「数量」里填使用个数（默认 1，如用 2 个勺子）。';
   if(!components.length){
-    box.innerHTML='<div class="muted" style="font-size:12px;padding:4px 0">还没有配料配比，请先到「④ 配料配比」里建好（如舒芙蕾胚、奶盖、小料、勺子、打包盒）。</div>';
+    box.innerHTML='<div class="muted" style="font-size:12px;padding:4px 0">还没有配料配比，请先到「④ 配料成本」里建好（如舒芙蕾胚、奶盖、小料、勺子、打包盒）。</div>';
   }else{
     components.forEach(c=>{
       const qty=map.get(String(c.id))||0;
