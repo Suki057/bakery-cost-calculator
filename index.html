@@ -1518,7 +1518,7 @@ function renderProfit(){
       <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="price" value="${p.price||''}"></td>
       <td class="num">${yuan(cost)}</td>
       <td class="num" id="dine-profit-${p.id}">${yuan(pPrice(p)-cost)}</td>
-      <td class="num"><input class="pinput" type="text" data-id="${p.id}" data-f="margin-dine" value="${marginNote(p,'dine')||autoMarginDine(p)}" placeholder="${autoMarginDine(p)}"></td>`;
+      <td class="num"><input class="pinput" type="text" data-id="${p.id}" data-f="margin-dine" value="${marginNote(p,'dine')||''}" placeholder=""></td>`;
     db.appendChild(tr);
     // 美团
     const tr2=document.createElement('tr');
@@ -1528,7 +1528,7 @@ function renderProfit(){
       <td class="num" id="del-fee-${p.id}">${yuan(pDprice(p)*pComm(p))}</td>
       <td class="num">${yuan(cost)}</td>
       <td class="num" id="del-profit-${p.id}">${yuan(pDprice(p)-pDprice(p)*pComm(p)-cost)}</td>
-      <td class="num"><input class="pinput" type="text" data-id="${p.id}" data-f="margin-del" value="${marginNote(p,'del')||autoMarginDel(p)}" placeholder="${autoMarginDel(p)}"></td>`;
+      <td class="num"><input class="pinput" type="text" data-id="${p.id}" data-f="margin-del" value="${marginNote(p,'del')||''}" placeholder=""></td>`;
     elb.appendChild(tr2);
     // 闪购（复用美团定价 dprice，独立扣点 scomm）
     const tr3=document.createElement('tr');
@@ -1538,7 +1538,7 @@ function renderProfit(){
       <td class="num" id="shan-fee-${p.id}">${yuan(pDprice(p)*pScomm(p))}</td>
       <td class="num">${yuan(cost)}</td>
       <td class="num" id="shan-profit-${p.id}">${yuan(pDprice(p)-pDprice(p)*pScomm(p)-cost)}</td>
-      <td class="num"><input class="pinput" type="text" data-id="${p.id}" data-f="margin-shan" value="${marginNote(p,'shan')||autoMarginShan(p)}" placeholder="${autoMarginShan(p)}"></td>`;
+      <td class="num"><input class="pinput" type="text" data-id="${p.id}" data-f="margin-shan" value="${marginNote(p,'shan')||''}" placeholder=""></td>`;
     slb.appendChild(tr3);
   });
   document.querySelectorAll('.pinput').forEach(inp=>inp.oninput=()=>{
@@ -1580,18 +1580,18 @@ function updateProfitRow(p){
   // 闪购
   const sf=$('#shan-fee-'+p.id);if(sf)sf.textContent=yuan(dprice*scomm);
   const sp=$('#shan-profit-'+p.id);if(sp)sp.textContent=yuan(dprice-dprice*scomm-cost);
-  // 利润率：用户未手动输入时自动计算，已输入则保留用户值
-  const setMargin=(sel,sec,auto)=>{
+  // 利润率：默认空白；仅保留用户手动输入的值
+  const setMargin=(sel,sec)=>{
     const el=document.querySelector(sel);
     if(!el)return;
+    if(document.activeElement===el)return; // 正在输入，不覆盖
     const note=marginNote(p,sec);
-    if(document.activeElement===el){/* 正在输入，不覆盖 */}
-    else if(note===''){el.value=auto; el.placeholder=auto;}
-    else{el.placeholder=auto;}
+    el.value=(note!=='')?note:'';
+    el.placeholder='';
   };
-  setMargin(`.pinput[data-id="${p.id}"][data-f="margin-dine"]`,'dine',price>0?pct((price-cost)/price):'—');
-  setMargin(`.pinput[data-id="${p.id}"][data-f="margin-del"]`,'del',dprice>0?pct((dprice-dprice*comm-cost)/dprice):'—');
-  setMargin(`.pinput[data-id="${p.id}"][data-f="margin-shan"]`,'shan',dprice>0?pct((dprice-dprice*scomm-cost)/dprice):'—');
+  setMargin(`.pinput[data-id="${p.id}"][data-f="margin-dine"]`,'dine');
+  setMargin(`.pinput[data-id="${p.id}"][data-f="margin-del"]`,'del');
+  setMargin(`.pinput[data-id="${p.id}"][data-f="margin-shan"]`,'shan');
 }
 
 /* ---------- 清空全部：所有板块数据移入回收站，7天后自动清除 ---------- */
