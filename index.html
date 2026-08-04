@@ -422,6 +422,7 @@
       <div class="hint">删除的食材 / 单品会先到这里，保留 <b>7 天</b>，到期自动永久清除。可随时「恢复」回原处，或「永久删除」。</div>
       <div class="toolbar">
         <div class="spacer"></div>
+        <button class="btn primary" id="bin-restore-all" style="margin-right:8px">↩️ 恢复全部</button>
         <button class="btn danger" id="bin-empty">🗑 清空回收站</button>
       </div>
       <div id="bin-list"></div>
@@ -530,6 +531,20 @@
     <div class="modal-foot between">
       <button class="btn primary" id="confirm-clear-ok">确定</button>
       <button class="btn ghost" id="confirm-clear-cancel">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 恢复全部确认弹窗 ============ -->
+<div class="modal" id="confirm-restore-all-modal">
+  <div class="modal-box" style="width:min(360px,100%)">
+    <div class="modal-head">恢复全部</div>
+    <div class="modal-body" style="text-align:center;font-size:15px;padding:24px 18px">
+      是否恢复回收站里的全部条目？<br><span style="font-size:13px;color:var(--muted)">食材、配料、单品将回到原来的板块</span>
+    </div>
+    <div class="modal-foot between">
+      <button class="btn primary" id="confirm-restore-all-ok">确定</button>
+      <button class="btn ghost" id="confirm-restore-all-cancel">取消</button>
     </div>
   </div>
 </div>
@@ -1695,6 +1710,39 @@ function restoreItem(id){
   bin=bin.filter(x=>x.id!=id);
   save();saveBin();renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderComponents();
 }
+function restoreAllBin(){
+  if(!bin.length){showToast('回收站已经是空的。');return;}
+  bin.forEach(item=>{
+    if(item.type==='ingredient'){
+      if(ingredients.some(x=>x.id===item.data.id)){
+        ingredients.push({...item.data,id:(ingredients.reduce((m,x)=>Math.max(m,x.id),0)||0)+1});
+      }else{
+        ingredients.push({...item.data});
+      }
+    }else if(item.type==='component'){
+      if(components.some(x=>x.id===item.data.id)){
+        components.push({...item.data,id:(components.reduce((m,x)=>Math.max(m,x.id),0)||0)+1});
+      }else{
+        components.push({...item.data});
+      }
+    }else{
+      if(products.some(x=>x.id===item.data.id)){
+        products.push({...item.data,id:(products.reduce((m,x)=>Math.max(m,x.id),0)||0)+1});
+      }else{
+        products.push({...item.data});
+      }
+    }
+  });
+  bin=[];
+  save();saveBin();renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderComponents();
+  showToast(`已恢复全部条目`);
+}
+$('#bin-restore-all').onclick=()=>{
+  if(!bin.length){showToast('回收站已经是空的。');return;}
+  $('#confirm-restore-all-modal').classList.add('active');
+};
+$('#confirm-restore-all-ok').onclick=()=>{restoreAllBin();$('#confirm-restore-all-modal').classList.remove('active');};
+$('#confirm-restore-all-cancel').onclick=()=>{$('#confirm-restore-all-modal').classList.remove('active');};
 $('#bin-empty').onclick=()=>{
   if(!bin.length){showToast('回收站已经是空的。');return;}
   bin=[];saveBin();renderBin();
