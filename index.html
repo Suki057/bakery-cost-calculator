@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -20,6 +20,8 @@
     --danger:#d9694e; --chip:#f3e9da; --shadow:0 6px 20px rgba(120,90,50,.10);
   }
   *{box-sizing:border-box}
+  *{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  .tab,.btn,button,summary,label,[role="button"]{touch-action:manipulation}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
     background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55}
   header{background:linear-gradient(120deg,#f6c177,#e8a04b);color:#3a2f25;padding:18px 24px;
@@ -46,9 +48,10 @@
   .cols-2{grid-template-columns:1fr 1fr}
   @media(max-width:720px){.cols-4,.cols-3,.cols-5,.cols-2{grid-template-columns:1fr 1fr}}
   label{font-size:12px;color:var(--muted);display:block;margin-bottom:3px}
-  input,select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;
-    background:#fff;color:var(--ink);font-size:13px;font-family:inherit}
-  input:focus,select:focus{outline:none;border-color:var(--brand)}
+  input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;
+    background:#fff;color:var(--ink);font-size:14px;font-family:inherit}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand)}
+  @media(max-width:720px){input,select,textarea{font-size:16px}}
   .row{display:grid;gap:10px;align-items:end;margin-bottom:10px}
   .btn{padding:9px 16px;border:none;border-radius:10px;background:var(--brand);color:#fff;
     font-weight:600;cursor:pointer;font-size:13px;transition:.15s;font-family:inherit}
@@ -542,7 +545,7 @@
       <div class="hint" style="margin-bottom:10px">
         粘贴符合「公式1」格式的 JSON 数据（食材清单 + 包材清单 + 单品配方）。系统会自动计算均价并导入进货清单与单品配方。
       </div>
-      <textarea id="formula1-text" style="width:100%;min-height:220px;border:1px solid var(--line);border-radius:10px;padding:10px;font-family:monospace;font-size:12px" placeholder='{"ingredients":[...],"packs":[...],"products":[...]}'></textarea>
+      <textarea id="formula1-text" style="width:100%;min-height:220px;border:1px solid var(--line);border-radius:10px;padding:10px;font-family:monospace;font-size:16px" placeholder='{"ingredients":[...],"packs":[...],"products":[...]}'></textarea>
       <div class="hint" style="margin-top:8px">示例文件已保存在本地 <code>formula1-example.json</code>，可复制其中内容粘贴。</div>
     </div>
     <div class="modal-foot">
@@ -563,7 +566,7 @@
       <div class="hint" style="margin-bottom:10px">
         粘贴符合「公式2」格式的 JSON 数据（食材清单 + 包材清单 + 配料表头/可制作数量/消耗率 + 单品配方）。系统会自动计算配料成本、单份用量、热量、脂肪并导入。
       </div>
-      <textarea id="formula2-text" style="width:100%;min-height:220px;border:1px solid var(--line);border-radius:10px;padding:10px;font-family:monospace;font-size:12px" placeholder='{"ingredients":[...],"packs":[...],"components":[...],"products":[...]}'></textarea>
+      <textarea id="formula2-text" style="width:100%;min-height:220px;border:1px solid var(--line);border-radius:10px;padding:10px;font-family:monospace;font-size:16px" placeholder='{"ingredients":[...],"packs":[...],"components":[...],"products":[...]}'></textarea>
       <div class="hint" style="margin-top:8px">示例文件已保存在本地 <code>formula2-example.json</code>，可复制其中内容粘贴。</div>
     </div>
     <div class="modal-foot">
