@@ -10,3 +10,5 @@ _test*
 # 公式1/公式2示例数据（含具体价格，仅本地保留）
 formula1-example.json
 formula2-example.json
+formula2-matcha.json
+_tmp/
