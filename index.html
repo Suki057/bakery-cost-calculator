@@ -35,9 +35,11 @@
   .stat{display:flex;flex-direction:column;align-items:center;gap:3px}
   .stat-num{font-size:28px;font-weight:800;line-height:1;text-shadow:0 1px 0 rgba(255,255,255,.3)}
   .stat-label{font-size:12px;opacity:.9;font-weight:600}
-  .wrap{max-width:1080px;margin:0 auto;padding:14px 18px calc(140px + env(safe-area-inset-bottom))}
+  html,body{height:100%;min-height:100dvh}
+  body{display:flex;flex-direction:column}
+  .wrap{flex:1;max-width:1080px;width:100%;margin:0 auto;padding:14px 18px calc(96px + env(safe-area-inset-bottom))}
   .tabs{display:flex;gap:8px;flex-wrap:wrap}
-  .bottom-tabs{position:fixed;bottom:0;left:0;right:0;margin:0;padding:12px 14px calc(14px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line);z-index:40;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;box-shadow:0 -4px 14px rgba(0,0,0,.06)}
+  .bottom-tabs{position:fixed;bottom:0;left:0;right:0;margin:0;padding:12px 14px calc(14px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line);z-index:40;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;box-shadow:0 -4px 14px rgba(0,0,0,.06);transform:translateZ(0)}
   .bottom-tabs .tab{display:flex;align-items:center;justify-content:center;text-align:center;min-height:46px;padding:8px 6px;font-size:13px;border-radius:12px}
   .tab{padding:9px 16px;border:1px solid var(--line);background:var(--panel);border-radius:10px;
     cursor:pointer;color:var(--muted);font-weight:600;user-select:none;transition:.15s;touch-action:manipulation}
@@ -326,8 +328,6 @@
       <div class="hint">「定价」填你店里卖的价格，成本自动来自配方；利润 = 定价 − 成本，利润率 = 利润 ÷ 定价。直接改表格里的定价即可实时计算。</div>
       <div class="toolbar" style="align-items:center">
         <span class="muted">日期：</span><input id="dine-date" type="text" style="width:140px" placeholder="如 2026-08-02">
-        <span class="muted" style="margin-left:10px">备注：</span><input id="dine-note" type="text" style="flex:1;min-width:120px" placeholder="可选填">
-        <span class="muted" style="margin-left:10px">当日营收(元)：</span><input id="dine-manual-total" type="number" min="0" step="any" style="width:100px" placeholder="可选">
       </div>
       <table>
         <thead><tr>
@@ -341,16 +341,14 @@
     </div>
 
     <div class="card">
-      <h2><span class="dot"></span>美团 · 利润</h2>
-      <div class="hint">美团要扣平台服务费（定价 × 扣点）；利润 = 定价 − 平台服务费 − 成本，利润率 = 利润 ÷ 定价。</div>
+      <h2><span class="dot"></span>利润</h2>
+      <div class="hint">要扣平台服务费（定价 × 扣点）；利润 = 定价 − 平台服务费 − 成本，利润率 = 利润 ÷ 定价。</div>
       <div class="toolbar" style="align-items:center">
-        <span class="muted">美团统一扣点：</span>
-        <input id="global-comm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%（改这里一次性设置所有美团单品的平台扣点，公式不变）</span>
+        <span class="muted">统一扣点：</span>
+        <input id="global-comm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%（改这里一次性设置所有单品的平台扣点，公式不变）</span>
       </div>
       <div class="toolbar" style="align-items:center">
         <span class="muted">日期：</span><input id="del-date" type="text" style="width:140px" placeholder="如 2026-08-02">
-        <span class="muted" style="margin-left:10px">备注：</span><input id="del-note" type="text" style="flex:1;min-width:120px" placeholder="可选填">
-        <span class="muted" style="margin-left:10px">当日营收(元)：</span><input id="del-manual-total" type="number" min="0" step="any" style="width:100px" placeholder="可选">
       </div>
       <table>
         <thead><tr>
@@ -365,16 +363,14 @@
     </div>
 
     <div class="card">
-      <h2><span class="dot"></span>闪购 · 利润</h2>
-      <div class="hint">闪购要扣平台服务费（定价 × 扣点）；利润 = 定价 − 平台服务费 − 成本，利润率 = 利润 ÷ 定价。</div>
+      <h2><span class="dot"></span>利润</h2>
+      <div class="hint">要扣平台服务费（定价 × 扣点）；利润 = 定价 − 平台服务费 − 成本，利润率 = 利润 ÷ 定价。</div>
       <div class="toolbar" style="align-items:center">
-        <span class="muted">闪购统一扣点：</span>
-        <input id="global-scomm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%（改这里一次性设置所有闪购单品的平台扣点，公式不变）</span>
+        <span class="muted">统一扣点：</span>
+        <input id="global-scomm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%（改这里一次性设置所有单品的平台扣点，公式不变）</span>
       </div>
       <div class="toolbar" style="align-items:center">
         <span class="muted">日期：</span><input id="shan-date" type="text" style="width:140px" placeholder="如 2026-08-02">
-        <span class="muted" style="margin-left:10px">备注：</span><input id="shan-note" type="text" style="flex:1;min-width:120px" placeholder="可选填">
-        <span class="muted" style="margin-left:10px">当日营收(元)：</span><input id="shan-manual-total" type="number" min="0" step="any" style="width:100px" placeholder="可选">
       </div>
       <table>
         <thead><tr>
@@ -1241,17 +1237,13 @@ function renderProfit(){
   if(document.activeElement!==gc) gc.value='';
   const sc=$('#global-scomm');
   if(document.activeElement!==sc) sc.value='';
-  // 恢复日期/备注/手动营收（localStorage 持久化）
+  // 恢复日期（localStorage 持久化）
   ['dine','del','shan'].forEach(sec=>{
-    const dateEl=$('#'+sec+'-date'),noteEl=$('#'+sec+'-note'),totalEl=$('#'+sec+'-manual-total');
+    const dateEl=$('#'+sec+'-date');
     const key='bakery_'+sec+'_meta';
     const meta=JSON.parse(localStorage.getItem(key)||'{}');
     if(dateEl&&!dateEl.dataset.inited){dateEl.value=meta.date||'';dateEl.dataset.inited='1';
       dateEl.oninput=()=>{const m=JSON.parse(localStorage.getItem(key)||'{}');m.date=dateEl.value;localStorage.setItem(key,JSON.stringify(m));};}
-    if(noteEl&&!noteEl.dataset.inited){noteEl.value=meta.note||'';noteEl.dataset.inited='1';
-      noteEl.oninput=()=>{const m=JSON.parse(localStorage.getItem(key)||'{}');m.note=noteEl.value;localStorage.setItem(key,JSON.stringify(m));};}
-    if(totalEl&&!totalEl.dataset.inited){totalEl.value=meta.total||'';totalEl.dataset.inited='1';
-      totalEl.oninput=()=>{const m=JSON.parse(localStorage.getItem(key)||'{}');m.total=totalEl.value;localStorage.setItem(key,JSON.stringify(m));};}
   });
 }
 function updateProfitRow(p){
