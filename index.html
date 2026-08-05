@@ -35,11 +35,10 @@
   .stat{display:flex;flex-direction:column;align-items:center;gap:3px}
   .stat-num{font-size:28px;font-weight:800;line-height:1;text-shadow:0 1px 0 rgba(255,255,255,.3)}
   .stat-label{font-size:12px;opacity:.9;font-weight:600}
-  .wrap{max-width:1080px;margin:0 auto;padding:14px 18px calc(92px + env(safe-area-inset-bottom))}
+  .wrap{max-width:1080px;margin:0 auto;padding:14px 18px calc(140px + env(safe-area-inset-bottom))}
   .tabs{display:flex;gap:8px;flex-wrap:wrap}
-  .bottom-tabs{position:fixed;bottom:0;left:0;right:0;margin:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line);overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;z-index:40;scrollbar-width:none}
-  .bottom-tabs::-webkit-scrollbar{display:none}
-  .bottom-tabs .tab{flex:0 0 auto;white-space:nowrap;padding:10px 14px;font-size:13px}
+  .bottom-tabs{position:fixed;bottom:0;left:0;right:0;margin:0;padding:12px 14px calc(14px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line);z-index:40;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;box-shadow:0 -4px 14px rgba(0,0,0,.06)}
+  .bottom-tabs .tab{display:flex;align-items:center;justify-content:center;text-align:center;min-height:46px;padding:8px 6px;font-size:13px;border-radius:12px}
   .tab{padding:9px 16px;border:1px solid var(--line);background:var(--panel);border-radius:10px;
     cursor:pointer;color:var(--muted);font-weight:600;user-select:none;transition:.15s;touch-action:manipulation}
   .tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
@@ -105,15 +104,6 @@
   .recipe-details[open] summary:before{content:"▾ "}
   .recipe-details[open] summary{border-radius:11px 11px 0 0;border-bottom:1px solid var(--line)}
   .recipe-details[open] .recipebox{border:none;border-radius:0 0 11px 11px}
-  /* 配料配比库：食材与用量可收缩 */
-  .comp-details{border:1px solid var(--line);border-radius:11px;overflow:hidden;background:#fff;margin-top:6px}
-  .comp-details summary{cursor:pointer;font-weight:600;color:var(--brand-d);font-size:13px;list-style:none;padding:10px 14px;background:#faf4ea;user-select:none}
-  .comp-details summary::-webkit-details-marker{display:none}
-  .comp-details summary:before{content:"▸ "}
-  .comp-details[open] summary:before{content:"▾ "}
-  .comp-details[open] summary{border-bottom:1px solid var(--line)}
-  .comp-details .lines,.comp-details .addline{padding:10px 14px}
-  .compedit-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:13px}
   .modal-lines{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
   .lines{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
   .lineitem{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fff}
@@ -207,7 +197,6 @@
   <div class="hero-stats">
     <div class="stat"><span class="stat-num" id="dash-products">0</span><span class="stat-label">在售单品</span></div>
     <div class="stat"><span class="stat-num" id="dash-ingredients">0</span><span class="stat-label">食材/包材</span></div>
-    <div class="stat"><span class="stat-num" id="dash-components">0</span><span class="stat-label">配料</span></div>
   </div>
 </section>
 
@@ -268,10 +257,6 @@
       </div>
       <div style="margin-top:8px;font-size:12px;color:var(--muted)">条目分类：<span id="ing-type-chip" class="tag" style="cursor:pointer">未选择（点击名称框）</span></div>
       <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;align-items:flex-end">
-        <div id="ing-nutrition-row" style="display:flex;gap:10px;flex:1;min-width:260px">
-          <div style="flex:1"><label>热量（100g/KJ）</label><input id="ing-kj" type="number" min="0" step="any" placeholder="如：1460（每100g）"></div>
-          <div style="flex:1"><label>脂肪（100g/g）</label><input id="ing-fat" type="number" min="0" step="any" placeholder="如：8（每100g）"></div>
-        </div>
         <div><label>&nbsp;</label><button class="btn" id="ing-add">＋ 添加</button></div>
       </div>
     </div>
@@ -281,7 +266,6 @@
       <table>
         <thead><tr>
           <th>食材</th>
-          <th class="num">热量(kcal)</th><th class="num">脂肪(g)</th>
           <th class="num">单价(元/g)</th>
           <th></th>
         </tr></thead>
@@ -319,9 +303,9 @@
         </div>
       </div>
       <div style="display:flex;gap:10px;margin-top:10px;align-items:flex-end">
-        <button class="btn ghost" id="comp-pick">🧩 选择配料</button>
-        <button class="btn" id="ing-pick">📦 添加包材</button>
+        <button class="btn" id="ing-pick">🥬 添加食材/包材</button>
       </div>
+      <div id="recipe-status" style="margin-top:10px;padding:8px 10px;border-radius:8px;font-size:13px;border-left:3px solid var(--brand);background:#faf4ea"></div>
       <div style="display:flex;justify-content:flex-end;margin-top:12px">
         <button class="btn" id="prod-add">✓ 确认添加</button>
       </div>
@@ -332,23 +316,6 @@
       <div class="toolbar"><input class="search" id="prod-search" placeholder="🔍 搜索单品名称 / 分类"></div>
       <div id="prod-list"></div>
       <div class="empty" id="prod-empty" style="display:none">还没有单品，先在上面新建一个，再点「制作配方」加入食材。</div>
-    </div>
-  </section>
-
-  <!-- ============ 配料配比 ============ -->
-  <section class="panel" id="panel-comp">
-    <div class="card">
-      <h2><span class="dot"></span>新建配料配比</h2>
-      <div class="hint">配料配比是「单品」的拼装单元，例如一个舒芙蕾 = 舒芙蕾胚 + 奶盖 + 小料 + 勺子 + 打包盒。在这里先建好每个部分，并填好它使用的<b>食材与用量</b>；之后在「③ 单品配方」里只要多选这些部分（可填数量）即可组成单品，无需再一个个选食材。</div>
-      <div class="grid cols-2" style="margin-top:12px">
-        <div><label>配料配比名称</label><input id="comp-name" placeholder="如：舒芙蕾胚"></div>
-        <div><label>&nbsp;</label><button class="btn" id="comp-add">＋ 添加配料</button></div>
-      </div>
-    </div>
-    <div class="card">
-      <h2><span class="dot"></span>配料配比库 <span class="muted" id="comp-count" style="font-weight:400"></span></h2>
-      <div id="comp-list"></div>
-      <div class="empty" id="comp-empty" style="display:none">还没有配料配比，先在上面添加一个。</div>
     </div>
   </section>
 
@@ -442,56 +409,16 @@
   <div class="tab active" data-tab="shop">① 店铺单品</div>
   <div class="tab" data-tab="ing">② 进货清单</div>
   <div class="tab" data-tab="prod">③ 单品配方</div>
-  <div class="tab" data-tab="comp">④ 配料成本</div>
-  <div class="tab" data-tab="profit">⑤ 利润率</div>
-  <div class="tab" data-tab="bin">⑥ 回收站</div>
-  <div class="tab" data-tab="off">⑦ 产品下架</div>
+  <div class="tab" data-tab="profit">④ 利润率</div>
+  <div class="tab" data-tab="bin">⑤ 回收站</div>
+  <div class="tab" data-tab="off">⑥ 产品下架</div>
 </nav>
-
-<!-- ============ 配方弹窗 ============ -->
-<div class="modal" id="comp-modal">
-  <div class="modal-box">
-    <div class="modal-head">
-      <span>选择配料：<span id="comp-modal-target"></span></span>
-      <span class="delx" id="comp-modal-close" title="关闭">✕</span>
-    </div>
-    <div class="modal-body">
-      <div class="hint" id="comp-modal-note" style="margin-bottom:12px"></div>
-      <div class="modal-lines" id="comp-modal-lines"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn" id="comp-modal-save">保存</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal" id="comp-edit-modal">
-  <div class="modal-box">
-    <div class="modal-head">
-      <span>配料：<span id="comp-edit-name"></span></span>
-      <span class="delx" id="comp-edit-close" title="关闭">✕</span>
-    </div>
-    <div class="modal-body">
-      <div class="hint" style="margin-bottom:12px">为该配料配比添加使用的食材与用量，点右下角「确定」保存到配料配比库。</div>
-      <div class="modal-lines" id="comp-edit-lines"></div>
-      <div class="addline">
-        <select id="comp-edit-ing"><option value="">＋ 选择食材…</option></select>
-        <input id="comp-edit-qty" type="number" min="0" step="any" placeholder="用量(同单位)">
-        <button class="btn sm" id="comp-edit-add">添加</button>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn ghost" id="comp-edit-cancel">取消</button>
-      <button class="btn primary" id="comp-edit-save">确定</button>
-    </div>
-  </div>
-</div>
 
 <!-- ============ 食材库选择弹窗 ============ -->
 <div class="modal" id="ing-modal">
   <div class="modal-box">
     <div class="modal-head">
-      <span>添加包材：<span id="ing-modal-target"></span></span>
+      <span>添加食材/包材：<span id="ing-modal-target"></span></span>
       <span class="delx" id="ing-modal-close" title="关闭">✕</span>
     </div>
     <div class="modal-body">
@@ -543,7 +470,7 @@
   <div class="modal-box" style="width:min(360px,100%)">
     <div class="modal-head">清空确认</div>
     <div class="modal-body" style="text-align:center;font-size:15px;padding:24px 18px">
-      是否清空全部数据？<br><span style="font-size:13px;color:var(--muted)">所有食材、配料、单品将移入回收站，7天后自动清除</span>
+      是否清空全部数据？<br><span style="font-size:13px;color:var(--muted)">所有食材、单品将移入回收站，7天后自动清除</span>
     </div>
     <div class="modal-foot between">
       <button class="btn primary" id="confirm-clear-ok">确定</button>
@@ -557,7 +484,7 @@
   <div class="modal-box" style="width:min(360px,100%)">
     <div class="modal-head">恢复全部</div>
     <div class="modal-body" style="text-align:center;font-size:15px;padding:24px 18px">
-      是否恢复回收站里的全部条目？<br><span style="font-size:13px;color:var(--muted)">食材、配料、单品将回到原来的板块</span>
+      是否恢复回收站里的全部条目？<br><span style="font-size:13px;color:var(--muted)">食材、单品将回到原来的板块</span>
     </div>
     <div class="modal-foot between">
       <button class="btn primary" id="confirm-restore-all-ok">确定</button>
@@ -581,53 +508,35 @@ const PRESETS=[  // 当前无内置预设数据
 function applyPresetData(preset){
   const maxIngId=(ingredients.reduce((m,i)=>Math.max(m,i.id),0)||0);
   const maxProdId=(products.reduce((m,p)=>Math.max(m,p.id),0)||0);
-  const maxCompId=(components.reduce((m,c)=>Math.max(m,c.id),0)||0);
-  let nIng=0,nPack=0,nProd=0,nComp=0,nAdded=0;
-  // 导入食材
+  let nIng=0,nPack=0,nProd=0,nAdded=0;
+  // 导入食材与包材
   const ingMap={};  // name -> new id
   [...preset.ingredients,...preset.packs].forEach((s,idx)=>{
     if(ingredients.some(i=>i.name===s.name))return;  // 已存在则跳过
     const newId=maxIngId+nAdded+1;
     ingMap[s.name]=newId;
-    ingredients.push({id:newId,name:s.name,qty:s.qty,unit:s.unit,cost:s.cost,kj:s.kj||0,fat:s.fat||0,type:s.type});
+    ingredients.push({id:newId,name:s.name,qty:s.qty,unit:s.unit,cost:s.cost,type:s.type});
     s.type==='food'?nIng++:nPack++;
     nAdded++;
   });
   // 也把已有食材加入映射
   ingredients.forEach(i=>{if(!ingMap[i.name])ingMap[i.name]=i.id;});
-  // 导入配料（lines 为单份用量）
-  const compMap={}; // name -> new id
-  (preset.components||[]).forEach((c,idx)=>{
-    if(components.some(x=>x.name===c.name))return;
-    const newId=maxCompId+nComp+1;
-    compMap[c.name]=newId;
-    const lines=(c.lines||[]).map(l=>{
-      const id=ingMap[l.ingName];
-      if(!id)return null;
-      return {ingId:id,qty:Number(l.qty)||0};
-    }).filter(Boolean);
-    components.push({id:newId,name:c.name,lines});
-    nComp++;
-  });
-  // 把已有配料也加入映射
-  components.forEach(c=>{if(!compMap[c.name])compMap[c.name]=c.id;});
-  // 导入单品
+  // 导入单品（配方直接引用食材/包材）
   preset.products.forEach(p=>{
     if(products.some(x=>x.name===p.name))return;  // 已存在则跳过
     const newId=maxProdId+nProd+1;
     const lines=(p.lines||[]).map(l=>{const id=ingMap[l.ingName];return id?{ingId:id,qty:l.qty}:null;}).filter(Boolean);
     const packLines=(p.packLines||[]).map(l=>{const id=ingMap[l.pkName];return id?{ingId:id,qty:l.qty}:null;}).filter(Boolean);
-    const compLines=(p.components||[]).map(l=>{const id=compMap[l.compName];return id?{compId:id,qty:Number(l.qty)||1}:null;}).filter(Boolean);
     products.push({
       id:newId,name:p.name,cat:p.cat||'其他',date:p.date||'',status:'',
-      lines:[...lines,...packLines],compLines:compLines,price:p.price==null?null:p.price,dprice:p.dprice==null?null:p.dprice,
+      lines:[...lines,...packLines],price:p.price==null?null:p.price,dprice:p.dprice==null?null:p.dprice,
       comm:p.comm==null?null:p.comm,scomm:p.scomm==null?null:p.scomm
     });
     nProd++;
   });
-  save();saveComponents();
-  renderIngredients();renderComponents();renderProducts();renderShop();renderOff();renderBin();renderProfit();
-  return {nIng,nPack,nComp,nProd,name:preset.name};
+  save();
+  renderIngredients();renderProducts();renderShop();renderOff();renderBin();renderProfit();
+  return {nIng,nPack,nProd,name:preset.name};
 }
 
 /* 导入预设数据 */
@@ -635,8 +544,7 @@ function importPreset(presetId){
   const preset=PRESETS.find(p=>p.id===presetId);
   if(!preset){showToast('预设不存在');return;}
   const res=applyPresetData(preset);
-  const compInfo=res.nComp?` + ${res.nComp} 种配料` : '';
-  $('#io-info').textContent=`已导入预设「${res.name}」：${res.nIng} 种食材 + ${res.nPack} 种包材${compInfo} + ${res.nProd} 个单品`;
+  $('#io-info').textContent=`已导入预设「${res.name}」：${res.nIng} 种食材 + ${res.nPack} 种包材 + ${res.nProd} 个单品`;
   showToast(`已导入「${res.name}」`);
 }
 
@@ -654,16 +562,15 @@ function renderPresets(){
 }
 
 /* ---------- 存储（版本号触发清空旧示例数据） ---------- */
-const LS_ING='bakery_ingredients', LS_PROD='bakery_products', LS_BIN='bakery_bin', LS_COMP='bakery_components', LS_VER='bakery_ver';
+const LS_ING='bakery_ingredients', LS_PROD='bakery_products', LS_BIN='bakery_bin', LS_VER='bakery_ver';
 const APP_VER=2;
 if(localStorage.getItem(LS_VER)!==String(APP_VER)){
-  localStorage.removeItem(LS_ING);localStorage.removeItem(LS_PROD);localStorage.removeItem(LS_BIN);localStorage.removeItem(LS_COMP);
+  localStorage.removeItem(LS_ING);localStorage.removeItem(LS_PROD);localStorage.removeItem(LS_BIN);
   localStorage.setItem(LS_VER,String(APP_VER));
 }
 let ingredients=JSON.parse(localStorage.getItem(LS_ING)||'[]');
 let products=JSON.parse(localStorage.getItem(LS_PROD)||'[]');
 let bin=JSON.parse(localStorage.getItem(LS_BIN)||'[]');
-let components=JSON.parse(localStorage.getItem(LS_COMP)||'[]');
 
 /* 回收站自动清除：超过 7 天的项永久删除 */
 const SEVEN_DAYS=7*24*60*60*1000;
@@ -671,7 +578,6 @@ bin=bin.filter(it=>Date.now()-it.deletedAt<=SEVEN_DAYS);
 
 function save(){localStorage.setItem(LS_ING,JSON.stringify(ingredients));localStorage.setItem(LS_PROD,JSON.stringify(products));}
 function saveBin(){localStorage.setItem(LS_BIN,JSON.stringify(bin));}
-function saveComponents(){localStorage.setItem(LS_COMP,JSON.stringify(components));}
 function binId(){return Date.now()+Math.floor(Math.random()*10000);}
 
 /* ---------- 数据导出 / 导入 ---------- */
@@ -679,7 +585,7 @@ function collectData(){
   const meta={};
   ['dine','del','shan'].forEach(s=>{const k='bakery_'+s+'_meta';meta[s]=localStorage.getItem(k);});
   return {app:'bakery-cost', ver:APP_VER, exportedAt:new Date().toISOString(),
-          ingredients, products, bin, components, meta};
+          ingredients, products, bin, meta};
 }
 function mergeById(existing, imported){
   if(!Array.isArray(imported))return existing;
@@ -701,17 +607,16 @@ function exportData(){
   showToast('数据已导出保存');
 }
 function doMergeImport(data){
-  let nIng=0,nProd=0,nBin=0,nComp=0;
+  let nIng=0,nProd=0,nBin=0;
   if(Array.isArray(data.ingredients)){ingredients=mergeById(ingredients,data.ingredients);nIng=data.ingredients.length;}
   if(Array.isArray(data.products)){products=mergeById(products,data.products);nProd=data.products.length;}
   if(Array.isArray(data.bin)){bin=mergeById(bin,data.bin);nBin=data.bin.length;}
-  if(Array.isArray(data.components)){components=mergeById(components,data.components);nComp=data.components.length;}
   if(data.meta&&typeof data.meta==='object'){
     ['dine','del','shan'].forEach(s=>{const k='bakery_'+s+'_meta';if(data.meta[s]!=null)localStorage.setItem(k,data.meta[s]);});
   }
   save();saveBin();
-  renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderOff();renderComponents();updateRecipeStatus();
-  $('#io-info').textContent=`已导入并合并：${nIng} 个食材 / ${nProd} 个单品 / ${nComp} 个配料配比 / ${nBin} 个下架项`;
+  renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderOff();updateRecipeStatus();
+  $('#io-info').textContent=`已导入并合并：${nIng} 个食材 / ${nProd} 个单品 / ${nBin} 个下架项`;
   showToast('数据已导入恢复');
 }
 function importData(file){
@@ -723,7 +628,7 @@ function importData(file){
     // 判断是否为本软件的完整备份数据
     const isBackup=Array.isArray(data.bin)||data.meta!=null||
       (Array.isArray(data.products)&&data.products.length>0&&(
-        Array.isArray(data.products[0].lines)||Array.isArray(data.products[0].compLines)
+        Array.isArray(data.products[0].lines)
       ));
     if(isBackup){
       doMergeImport(data);
@@ -746,7 +651,6 @@ function autoMarginDine(p){const cost=productCost(p),price=pPrice(p);return pric
 function autoMarginDel(p){const cost=productCost(p),dprice=pDprice(p),comm=pComm(p);return dprice>0?pct((dprice-dprice*comm-cost)/dprice):'—';}
 function autoMarginShan(p){const cost=productCost(p),dprice=pDprice(p),scomm=pScomm(p);return dprice>0?pct((dprice-dprice*scomm-cost)/dprice):'—';}
 function ingById(id){return ingredients.find(i=>i.id==id);}
-const KJ2KCAL=4.18;                                       // kJ → kcal（按营养换算惯例）
 function unitPricePerG(i){                                // 单价(元/g)=进货单价÷单份重量
   if(!i||!(i.qty>0))return 0;
   return i.cost/(i.qty*massFactor(i.unit));
@@ -763,21 +667,10 @@ function lineCost(line){                                   // 单份成本=用�
   return line.qty*massFactor(i.unit)*unitPricePerG(i);
 }
 function productCost(p){
-  const fromIng=(p.lines||[]).reduce((s,l)=>s+lineCost(l),0);
-  const fromComp=(p.compLines||[]).reduce((s,l)=>{const c=compById(l.compId);return s+(c?componentCost(c)*l.qty:0);},0);
-  return fromIng+fromComp;
+  return (p.lines||[]).reduce((s,l)=>s+lineCost(l),0);
 }
-function productCompCost(p){
-  return (p.compLines||[]).reduce((s,l)=>{const c=compById(l.compId);return s+(c?componentCost(c)*l.qty:0);},0);
-}
-function productPackCost(p){
-  return (p.lines||[]).reduce((s,l)=>{const i=ingById(l.ingId);return s+(i&&i.type==='pack'?lineCost(l):0);},0);
-}
-function productPackLines(p){return (p.lines||[]).filter(l=>{const i=ingById(l.ingId);return i&&i.type==='pack';});}
 function productWeight(p){
-  const fromIng=(p.lines||[]).reduce((s,l)=>{const i=ingById(l.ingId);return s+(i?l.qty*massFactor(i.unit):0);},0);
-  const fromComp=(p.compLines||[]).reduce((s,l)=>{const c=compById(l.compId);return s+(c?componentWeight(c)*l.qty:0);},0);
-  return fromIng+fromComp;
+  return (p.lines||[]).reduce((s,l)=>{const i=ingById(l.ingId);return s+(i?l.qty*massFactor(i.unit):0);},0);
 }
 function pPrice(p){return p.price||0;}                       // 堂食定价
 function pDprice(p){return p.dprice||0;}                     // 外卖定价
@@ -789,37 +682,9 @@ function massFactor(u){
   if(u==='g'||u==='ml')return 1;
   return 1; // 个/袋/盒/瓶/份 无标准克当量，按 1 处理
 }
-/* 热量/脂肪：食材库「每100g/100ml」数值 ×(用量×单位克当量÷100) 累计；kJ→kcal 系数 KJ2KCAL */
-function lineKj(line){const i=ingById(line.ingId);return i?(i.kj||0)*(line.qty*massFactor(i.unit)/100):0;}   // 单条食材热量(kJ)
-function lineKcal(line){return lineKj(line)/KJ2KCAL;}                                                             // 单条食材热量(kcal)
-function lineFat(line){const i=ingById(line.ingId);return i?(i.fat||0)*(line.qty*massFactor(i.unit)/100):0;}  // 单条食材脂肪(g)
-function productCal(p){
-  const fromIng=(p.lines||[]).reduce((s,l)=>s+lineKcal(l),0);
-  const fromComp=(p.compLines||[]).reduce((s,l)=>{const c=compById(l.compId);return s+(c?componentCal(c)*l.qty:0);},0);
-  return fromIng+fromComp;
-}
-function productFat(p){
-  const fromIng=(p.lines||[]).reduce((s,l)=>s+lineFat(l),0);
-  const fromComp=(p.compLines||[]).reduce((s,l)=>{const c=compById(l.compId);return s+(c?componentFat(c)*l.qty:0);},0);
-  return fromIng+fromComp;
-}
-/* ---------- 配料配比（单品的拼装单元，自身也是食材行集合） ---------- */
-function compById(id){return components.find(c=>c.id==id);}
-function compYield(c){const y=Number(c&&c.yield);return y>0?y:1;}     // 可制作数量（公式2），默认1
-function compWaste(c){const w=Number(c&&c.waste);return w>0?w:0;}     // 食材消耗率（公式2），默认0
-function componentCost(c){const y=compYield(c);return (c.lines||[]).reduce((s,l)=>s+lineCost(l),0)/y;}
-function componentWeight(c){
-  const y=compYield(c),w=compWaste(c);
-  const total=(c.lines||[]).reduce((s,l)=>{const i=ingById(l.ingId);return s+(i?l.qty*massFactor(i.unit):0);},0);
-  return total*(1-w)/y;
-}
-function componentCal(c){const y=compYield(c);return (c.lines||[]).reduce((s,l)=>s+lineKcal(l),0)/y;}
-function componentFat(c){const y=compYield(c);return (c.lines||[]).reduce((s,l)=>s+lineFat(l),0)/y;}
-/* 单品使用的食材项数 = 直接食材行数 + 各配料配比的食材行数 */
+/* 单品使用的食材项数 = 直接食材行数 */
 function productIngredientCount(p){
-  let n=(p.lines||[]).length;
-  (p.compLines||[]).forEach(l=>{const c=compById(l.compId);n+=(c&&c.lines)?c.lines.length:0;});
-  return n;
+  return (p.lines||[]).length;
 }
 
 /* 轻提示 */
@@ -831,10 +696,10 @@ function showToast(msg){
 
 /* ---------- Tab 切换 + 底部可拖动导航 ---------- */
 const TAB_LABELS={
-  shop:'① 店铺单品', ing:'② 进货清单', prod:'③ 单品配方', comp:'④ 配料成本',
-  profit:'⑤ 利润率', bin:'⑥ 回收站', off:'⑦ 产品下架'
+  shop:'① 店铺单品', ing:'② 进货清单', prod:'③ 单品配方',
+  profit:'④ 利润率', bin:'⑤ 回收站', off:'⑥ 产品下架'
 };
-const TAB_ORDER=['shop','ing','prod','comp','profit','bin','off'];
+const TAB_ORDER=['shop','ing','prod','profit','bin','off'];
 
 let currentTab='shop';
 function switchTab(key){
@@ -849,7 +714,6 @@ function switchTab(key){
   if(key==='bin')renderBin();
   if(key==='shop')renderShop();
   if(key==='off')renderOff();
-  if(key==='comp')renderComponents();
   // 滚动到底部导航栏让当前 tab 可见
   if(tabEl && tabEl.scrollIntoView){
     tabEl.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
@@ -880,10 +744,8 @@ function bindTabEvents(){
 function renderDashboard(){
   const onSale=products.filter(p=>p.status!=='off').length;
   const ingCount=ingredients.length;
-  const compCount=components.length;
   $('#dash-products').textContent=onSale;
   $('#dash-ingredients').textContent=ingCount;
-  $('#dash-components').textContent=compCount;
 }
 
 /* ---------- 食材库 ---------- */
@@ -896,20 +758,17 @@ function renderIngredients(){
   $('#ing-count-pack').textContent=pack.length?`（共 ${pack.length} 种）`:'';
   $('#ing-empty-food').style.display=food.length?'none':'block';
   $('#ing-empty-pack').style.display=pack.length?'none':'block';
-  const mkRow=(i, withNutrition)=>{
+  const mkRow=(i)=>{
     const tr=document.createElement('tr');
     let html=`<td><b>${i.name}</b></td>`;
-    if(withNutrition){
-      html+=`<td class="num">${Math.round((i.kj||0)/KJ2KCAL)}</td>\n      <td class="num">${i.fat||0}</td>`;
-    }
     html+=`<td class="num">${fmtPrice(unitPricePerG(i))}</td>
       <td style="text-align:right"><button class="delx" title="删除">✕</button></td>`;
     tr.innerHTML=html;
     tr.querySelector('.delx').onclick=()=>deleteIngredient(i);
     return tr;
   };
-  food.forEach(i=>tbF.appendChild(mkRow(i, true)));
-  pack.forEach(i=>tbP.appendChild(mkRow(i, false)));
+  food.forEach(i=>tbF.appendChild(mkRow(i)));
+  pack.forEach(i=>tbP.appendChild(mkRow(i)));
   renderDashboard();
 }
 $('#ing-add').onclick=()=>{
@@ -918,13 +777,11 @@ $('#ing-add').onclick=()=>{
   const qty=parseFloat($('#ing-qty').value);
   const unit=$('#ing-unit').value;
   const cost=parseFloat($('#ing-cost').value);
-  const kj=parseFloat($('#ing-kj').value)||0;
-  const fat=parseFloat($('#ing-fat').value)||0;
   if(!name||!(qty>0)||!(cost>=0)){showToast('请填好 名称 / 单份重量(>0) / 进货单价');return;}
   const id=(ingredients.reduce((m,x)=>Math.max(m,x.id),0)||0)+1;
-  ingredients.push({id,name,qty,unit,cost,kj,fat,type:pendingIngType});
+  ingredients.push({id,name,qty,unit,cost,type:pendingIngType});
   save();renderIngredients();
-  $('#ing-name').value='';$('#ing-qty').value='';$('#ing-cost').value='';$('#ing-kj').value='';$('#ing-fat').value='';
+  $('#ing-name').value='';$('#ing-qty').value='';$('#ing-cost').value='';
   pendingIngType=null;ingTypeChosen=null;updateTypeChip();
 };
 
@@ -941,10 +798,9 @@ let pendingIngType=null;     // 当前待添加的条目分类：'food' / 'pack'
 let ingTypeChosen=null;      // 弹窗中临时选中的分类
 function updateTypeChip(){
   const chip=$('#ing-type-chip');if(!chip)return;
-  const nut=$('#ing-nutrition-row');
-  if(pendingIngType==='food'){chip.textContent='🥬 食材';chip.className='tag c2';if(nut)nut.style.display='flex';}
-  else if(pendingIngType==='pack'){chip.textContent='📦 包材';chip.className='tag c3';if(nut)nut.style.display='none';}
-  else {chip.textContent='未选择（点击名称框）';chip.className='tag';if(nut)nut.style.display='flex';}
+  if(pendingIngType==='food'){chip.textContent='🥬 食材';chip.className='tag c2';}
+  else if(pendingIngType==='pack'){chip.textContent='📦 包材';chip.className='tag c3';}
+  else {chip.textContent='未选择（点击名称框）';chip.className='tag';}
   chip.style.cursor='pointer';
 }
 function openIngTypeModal(){
@@ -968,69 +824,14 @@ $('#ing-type-ok').onclick=()=>{
   $('#ing-name').focus();
 };
 
-/* ---------- 单品配方：配料配比选择（弹窗） ---------- */
-let draftCompLines=[];   // 新建单品时，弹窗里已选的配料配比（尚未提交）
-let draftLines=[];       // 新建单品时，弹窗里已选的食材（尚未提交）
-let compModalTarget=null; // {type:'new'} 或 {type:'product',id}
+/* ---------- 单品配方：选择食材/包材（弹窗） ---------- */
+let draftLines=[];       // 新建单品时，弹窗里已选的食材/包材（尚未提交）
 
-/* 配料配比选择弹窗：列出所有配料配比，勾选并设置数量 */
-function openCompModal(target){
-  compModalTarget=target;
-  const cur = target.type==='product'
-    ? (products.find(x=>x.id==target.id)?.compLines||[])
-    : draftCompLines;
-  const map=new Map(); cur.forEach(l=>map.set(String(l.compId),l.qty));
-  $('#comp-modal-target').textContent = target.type==='product'
-    ? (products.find(x=>x.id==target.id)?.name||'')
-    : ($('#prod-name').value.trim()||'新建单品');
-  const box=$('#comp-modal-lines');box.innerHTML='';
-  $('#comp-modal-note').textContent='勾选组成单品的部分，并在「数量」里填使用个数（默认 1，如用 2 个勺子）。';
-  if(!components.length){
-    box.innerHTML='<div class="muted" style="font-size:12px;padding:4px 0">还没有配料配比，请先到「④ 配料成本」里建好（如舒芙蕾胚、奶盖、小料、勺子、打包盒）。</div>';
-  }else{
-    components.forEach(c=>{
-      const qty=map.get(String(c.id))||0;
-      const div=document.createElement('div');div.className='modal-line';
-      div.innerHTML=`<label class="ln-label" style="cursor:pointer">
-          <input type="checkbox" class="cmpick" data-id="${c.id}" ${qty>0?'checked':''}>
-          <span><b>${c.name}</b> <span class="muted">${fmtCost(componentCost(c))} 元 · ${Math.round(componentWeight(c))}g</span></span>
-        </label>
-        <span class="qty-group"><span class="muted">数量</span>
-        <input type="number" min="0" step="any" value="${qty>0?qty:1}" class="compqty" data-id="${c.id}" style="width:72px" ${qty>0?'':'disabled'}></span>`;
-      const chk=div.querySelector('.cmpick');
-      const qin=div.querySelector('.compqty');
-      chk.onchange=()=>{ qin.disabled=!chk.checked; if(chk.checked && !qin.value) qin.value=1; };
-      box.appendChild(div);
-    });
-  }
-  $('#comp-modal').classList.add('active');
-}
-$('#comp-modal-close').onclick=()=>$('#comp-modal').classList.remove('active');
-$('#comp-modal-save').onclick=()=>{
-  const picks=[];
-  document.querySelectorAll('#comp-modal-lines .cmpick').forEach(chk=>{
-    if(chk.checked){
-      const id=+chk.dataset.id;
-      const q=parseFloat(document.querySelector(`#comp-modal-lines .compqty[data-id="${id}"]`).value)||1;
-      picks.push({compId:id,qty:q>0?q:1});
-    }
-  });
-  if(compModalTarget.type==='product'){
-    const p=products.find(x=>x.id==compModalTarget.id);
-    if(p){ p.compLines=picks; save(); renderProducts(); renderShop(); showToast('已更新配料配比'); }
-  }else{
-    draftCompLines=picks; updateRecipeStatus();
-  }
-  $('#comp-modal').classList.remove('active');
-};
-$('#comp-pick').onclick=()=>openCompModal({type:'new'});
-
-/* 包材库选择弹窗：列出所有包材，勾选并设置用量（单品配方→添加包材库） */
+/* 食材/包材选择弹窗：列出所有食材与包材，勾选并设置用量 */
 let ingModalTarget=null;
 function openIngModal(target){
   ingModalTarget=target;
-  const isPack = target.type==='new';           // 「添加包材库」只显示包材清单
-  const list = isPack ? ingredients.filter(i=>(i.type||'food')==='pack') : ingredients;
+  const list = ingredients;                      // 新建/编辑单品时，食材与包材都可勾选
   const cur = target.type==='product'
     ? (products.find(x=>x.id==target.id)?.lines||[])
     : draftLines;
@@ -1039,11 +840,9 @@ function openIngModal(target){
     ? (products.find(x=>x.id==target.id)?.name||'')
     : ($('#prod-name').value.trim()||'新建单品');
   const box=$('#ing-modal-lines');box.innerHTML='';
-  $('#ing-modal-note').textContent=isPack?'勾选包材，并在「用量」里填数量（单位与包材清单一致）。':'勾选食材，并在「用量」里填数量（单位与进货清单一致）。';
+  $('#ing-modal-note').textContent='勾选食材或包材，并在「用量」里填数量（单位与进货清单一致）。';
   if(!list.length){
-    box.innerHTML=isPack
-      ? '<div class="muted" style="font-size:12px;padding:4px 0">还没有包材，请先到「② 进货清单」的「包材清单」里添加（名称框选「包材」分类）。</div>'
-      : '<div class="muted" style="font-size:12px;padding:4px 0">还没有食材，请先到「② 进货清单」里添加。</div>';
+    box.innerHTML='<div class="muted" style="font-size:12px;padding:4px 0">还没有食材或包材，请先到「② 进货清单」里添加。</div>';
   }else{
     list.forEach(i=>{
       const qty=map.get(String(i.id))||0;
@@ -1082,131 +881,20 @@ $('#ing-modal-save').onclick=()=>{
 };
 $('#ing-pick').onclick=()=>openIngModal({type:'new'});
 
-/* 配方绑定状态提示：反映已选的配料配比 */
+/* 配方绑定状态提示：反映已选的食材/包材 */
 function updateRecipeStatus(){
   const el=$('#recipe-status');if(!el)return;
-  const n=draftCompLines.length;
+  const n=draftLines.length;
   if(n){
-    const cost=draftCompLines.reduce((s,l)=>{const c=compById(l.compId);return s+(c?componentCost(c)*l.qty:0);},0);
-    el.innerHTML=`配料配比状态：已选 <b>${n}</b> 个部分，单份成本 <b>${fmtCost(cost)} 元</b>。点「＋ 添加单品」即生成到下方。`;
+    const cost=draftLines.reduce((s,l)=>s+lineCost(l),0);
+    el.innerHTML=`已选用料状态：已选 <b>${n}</b> 项，单份成本 <b>${fmtCost(cost)} 元</b>。点「✓ 确认添加」即生成到下方。`;
     el.style.background='#eef5e9';el.style.borderLeftColor='var(--accent)';
   }else{
-    el.innerHTML='配料配比状态：未选择部分。填好名称和分类后，点「🧩 选择配料」勾选组成单品的部分即可。';
+    el.innerHTML='已选用料状态：未选择食材/包材。填好名称和分类后，点「🥬 添加食材/包材」勾选组成单品的内容即可。';
     el.style.background='#faf4ea';el.style.borderLeftColor='var(--brand)';
   }
 }
 
-/* ---------- 配料配比库（CRUD + 食材行内编辑） ---------- */
-function renderComponents(){
-  const list=$('#comp-list');list.innerHTML='';
-  $('#comp-count').textContent=components.length?`（共 ${components.length} 个）`:'';
-  $('#comp-empty').style.display=components.length?'none':'block';
-  components.forEach(c=>{
-    const card=document.createElement('div');card.className='card';card.style.marginBottom='12px';
-    card.innerHTML=`
-      <div class="pchead">
-        <div class="pcname"><b style="font-size:15px">${c.name}</b> <span class="muted">${fmtCost(componentCost(c))} 元 · ${Math.round(componentWeight(c))}g</span></div>
-        <button class="btn danger sm" data-act="delcomp" data-id="${c.id}">删除</button>
-      </div>
-      <details class="comp-details">
-        <summary>食材与用量（${(c.lines||[]).length}）</summary>
-        <div id="clines-${c.id}" class="lines"></div>
-        <div class="addline">
-          <select id="cnewing-${c.id}"><option value="">＋ 选择食材…</option>
-            ${ingredients.map(i=>`<option value="${i.id}">${i.name}（${fmtPrice(unitPricePerG(i))} 元/g）</option>`).join('')}
-          </select>
-          <input id="cnewqty-${c.id}" type="number" min="0" step="any" placeholder="用量(同单位)">
-          <button class="btn sm" data-act="addcline" data-id="${c.id}">添加</button>
-        </div>
-      </details>`;
-    list.appendChild(card);
-    const lb=$('#clines-'+c.id);
-    (c.lines||[]).forEach((l,idx)=>{
-      const ing=ingById(l.ingId);
-      const row=document.createElement('div');row.className='lineitem';
-      row.innerHTML=`
-        <div class="liname">${ing?ing.name:'<i>已删除食材</i>'} <span class="muted">(${ing?fmtPrice(unitPricePerG(ing))+' 元/g · 成本 '+fmtCost(lineCost(l))+' 元':'—'})</span></div>
-        <div class="lirow">
-          <div class="liqty"><span class="muted">用量</span><input type="number" min="0" step="any" value="${l.qty}" data-cid="${c.id}" data-idx="${idx}" class="clineqty"></div>
-          <button class="delx" data-act="delcline" data-cid="${c.id}" data-idx="${idx}">✕</button>
-        </div>`;
-      lb.appendChild(row);
-    });
-    lb.querySelectorAll('.clineqty').forEach(inp=>inp.onchange=()=>{
-      const comp=components.find(x=>x.id==+inp.dataset.cid);
-      comp.lines[+inp.dataset.idx].qty=parseFloat(inp.value)||0;
-      saveComponents();renderComponents();renderProducts();renderShop();
-    });
-    lb.querySelectorAll('[data-act="delcline"]').forEach(b=>b.onclick=()=>{
-      const comp=components.find(x=>x.id==+b.dataset.cid);
-      comp.lines.splice(+b.dataset.idx,1);
-      saveComponents();renderComponents();renderProducts();renderShop();
-    });
-    card.querySelector('[data-act="addcline"]').onclick=()=>{
-      const cid=+card.querySelector('[data-act="addcline"]').dataset.id;
-      const ingId=+$('#cnewing-'+cid).value, qty=parseFloat($('#cnewqty-'+cid).value);
-      if(!ingId||!(qty>0)){showToast('请选择食材并填好用量');return;}
-      const comp=components.find(x=>x.id==cid);
-      comp.lines.push({ingId,qty});
-      saveComponents();renderComponents();renderProducts();renderShop();
-    };
-    card.querySelector('[data-act="delcomp"]').onclick=()=>{
-      if(!confirm(`删除配料配比「${c.name}」？已引用它的单品会同步移除该部分。`))return;
-      components=components.filter(x=>x.id!=c.id);
-      products.forEach(p=>{ if(p.compLines) p.compLines=p.compLines.filter(l=>l.compId!=c.id); });
-      saveComponents();renderComponents();renderProducts();renderShop();
-      showToast(`已删除「${c.name}」`);
-    };
-  });
-  renderDashboard();
-}
-/* ---------- 新建配料配比：弹窗内填写食材与用量 ---------- */
-let compDraft=[];        // 弹窗里正在编辑的该配料配比食材行
-let compDraftName='';
-function renderCompEditLines(){
-  const box=$('#comp-edit-lines');box.innerHTML='';
-  if(!compDraft.length){box.innerHTML='<div class="muted" style="font-size:12px;padding:4px 0">还没添加食材，下面选食材、填用量，点「添加」。</div>';return;}
-  compDraft.forEach((l,idx)=>{
-    const ing=ingById(l.ingId);
-    const div=document.createElement('div');div.className='compedit-row';
-    div.innerHTML=`<span>${ing?ing.name:'<i>已删除食材</i>'} <span class="muted">${l.qty} ${ing?ing.unit:''}</span></span>
-      <button class="delx" data-idx="${idx}">✕</button>`;
-    div.querySelector('.delx').onclick=()=>{compDraft.splice(+div.querySelector('.delx').dataset.idx,1);renderCompEditLines();};
-    box.appendChild(div);
-  });
-}
-function openCompEdit(){
-  const name=$('#comp-name').value.trim();
-  if(!name){showToast('请填写配料配比名称');return;}
-  compDraftName=name;
-  compDraft=[];
-  $('#comp-edit-name').textContent=name;
-  $('#comp-edit-ing').innerHTML='<option value="">＋ 选择食材…</option>'+
-    ingredients.map(i=>`<option value="${i.id}">${i.name}（${fmtPrice(unitPricePerG(i))} 元/g）</option>`).join('');
-  $('#comp-edit-qty').value='';
-  renderCompEditLines();
-  $('#comp-edit-modal').classList.add('active');
-}
-$('#comp-add').onclick=openCompEdit;
-$('#comp-edit-close').onclick=()=>$('#comp-edit-modal').classList.remove('active');
-$('#comp-edit-cancel').onclick=()=>$('#comp-edit-modal').classList.remove('active');
-$('#comp-edit-add').onclick=()=>{
-  const ingId=+$('#comp-edit-ing').value;
-  const qty=parseFloat($('#comp-edit-qty').value);
-  if(!ingId||!(qty>0)){showToast('请选择食材并填好用量');return;}
-  compDraft.push({ingId,qty});
-  renderCompEditLines();
-  $('#comp-edit-qty').value='';$('#comp-edit-ing').value='';$('#comp-edit-qty').focus();
-};
-$('#comp-edit-save').onclick=()=>{
-  if(!compDraft.length){showToast('请至少添加一种食材与用量');return;}
-  const id=(components.reduce((m,x)=>Math.max(m,x.id),0)||0)+1;
-  components.push({id,name:compDraftName,lines:compDraft.slice()});
-  saveComponents();renderComponents();renderProducts();renderShop();
-  $('#comp-name').value='';
-  $('#comp-edit-modal').classList.remove('active');
-  showToast(`已添加「${compDraftName}」`);
-};
 
 function renderProducts(){
   const list=$('#prod-list');list.innerHTML='';
@@ -1217,21 +905,15 @@ function renderProducts(){
   filtered.forEach(p=>{
     const card=document.createElement('div');
     card.className='card';card.style.marginBottom='12px';
-    const compHtml=(p.compLines&&p.compLines.length)?`
-      <details class="recipe-details">
-        <summary>配料配比（${p.compLines.length}）<span class="muted" style="font-weight:400">成本 ${fmtCost(productCompCost(p))} 元</span></summary>
-        <div id="comps-${p.id}" class="lines"></div>
-        <div class="addline"><button class="btn sm" data-act="addcomp" data-id="${p.id}">＋ 加配料配比</button></div>
-      </details>`:'';
-    const packLines=productPackLines(p);
+    const packLines=(p.lines||[]);
     const ingHtml=(packLines.length)?`
-      <details class="recipe-details">
-        <summary>包材使用（${packLines.length}）<span class="muted" style="font-weight:400">成本 ${fmtCost(productPackCost(p))} 元</span></summary>
+      <details class="recipe-details" open>
+        <summary>配方用料（${packLines.length}）<span class="muted" style="font-weight:400">成本 ${fmtCost(productCost(p))} 元</span></summary>
         <div class="recipebox">
           <div id="lines-${p.id}" class="lines"></div>
           <div class="addline">
-            <select id="newing-${p.id}"><option value="">＋ 选择包材…</option>
-              ${ingredients.filter(i=>i.type==='pack').map(i=>`<option value="${i.id}">${i.name}（${fmtPrice(unitPricePerG(i))} 元/个）</option>`).join('')}
+            <select id="newing-${p.id}"><option value="">＋ 选择食材/包材…</option>
+              ${ingredients.map(i=>`<option value="${i.id}">${i.name}（${fmtPrice(unitPricePerG(i))} 元/${i.unit}）</option>`).join('')}
             </select>
             <input id="newqty-${p.id}" type="number" min="0" step="any" placeholder="数量(同单位)">
             <button class="btn sm" data-act="addline" data-id="${p.id}">添加</button>
@@ -1244,42 +926,18 @@ function renderProducts(){
         <button class="btn danger sm" data-act="del" data-id="${p.id}">删除</button>
       </div>
       <div class="pcinfo">单份成本 ${yuan(productCost(p))} · 共 ${productIngredientCount(p)} 项食材</div>
-      ${compHtml}
       ${ingHtml}`;
     list.appendChild(card);
 
-    /* 配料配比 section */
-    if(p.compLines&&p.compLines.length){
-      const cb=$('#comps-'+p.id);
-      p.compLines.forEach((l,idx)=>{
-        const c=compById(l.compId);
-        const row=document.createElement('div');row.className='lineitem';
-        row.innerHTML=`
-          <div class="liname">${c?c.name:'<i>已删除部分</i>'} <span class="muted">(${c?fmtCost(componentCost(c))+' 元 · '+Math.round(componentWeight(c))+'g':'—'})</span></div>
-          <div class="lirow">
-            <div class="liqty"><span class="muted">数量</span><input type="number" min="0" step="any" value="${l.qty}" data-id="${p.id}" data-idx="${idx}" class="compqty"></div>
-            <button class="delx" data-act="delcomp2" data-id="${p.id}" data-idx="${idx}">✕</button>
-          </div>`;
-        cb.appendChild(row);
-      });
-      cb.querySelectorAll('.compqty').forEach(inp=>inp.onchange=()=>{
-        const pr=products.find(x=>x.id==+inp.dataset.id);
-        pr.compLines[+inp.dataset.idx].qty=parseFloat(inp.value)||0;save();renderProducts();renderShop();
-      });
-      cb.querySelectorAll('[data-act="delcomp2"]').forEach(b=>b.onclick=()=>{
-        const pr=products.find(x=>x.id==+b.dataset.id);pr.compLines.splice(+b.dataset.idx,1);save();renderProducts();renderShop();
-      });
-      card.querySelector('[data-act="addcomp"]').onclick=()=>openCompModal({type:'product',id:p.id});
-    }
-    /* 包材使用 section */
+    /* 配方用料 section（食材 + 包材） */
     if(packLines.length){
       const lb=$('#lines-'+p.id);
       p.lines.forEach((l,idx)=>{
         const ing=ingById(l.ingId);
-        if(!ing || ing.type!=='pack') return;
+        if(!ing) return;
         const row=document.createElement('div');row.className='lineitem';
         row.innerHTML=`
-          <div class="liname">${ing.name} <span class="muted">(${fmtPrice(unitPricePerG(ing))} 元/个 · 成本 ${fmtCost(lineCost(l))} 元)</span></div>
+          <div class="liname">${ing.name} <span class="muted">(${fmtPrice(unitPricePerG(ing))} 元/${ing.unit} · 成本 ${fmtCost(lineCost(l))} 元)</span></div>
           <div class="lirow">
             <div class="liqty"><span class="muted">数量</span><input type="number" min="0" step="any" value="${l.qty}" data-id="${p.id}" data-idx="${idx}" class="lineqty"></div>
             <button class="delx" data-act="delline" data-id="${p.id}" data-idx="${idx}">✕</button>
@@ -1293,7 +951,7 @@ function renderProducts(){
       card.querySelector('[data-act="addline"]').onclick=()=>{
         const pid=+card.querySelector('[data-act="addline"]').dataset.id;
         const ingId=+$('#newing-'+pid).value,qty=parseFloat($('#newqty-'+pid).value);
-        if(!ingId||!(qty>0)){showToast('请选择食材并填好用量');return;}
+        if(!ingId||!(qty>0)){showToast('请选择食材/包材并填好用量');return;}
         products.find(x=>x.id==pid).lines.push({ingId,qty});save();renderProducts();
       };
       card.querySelectorAll('[data-act="delline"]').forEach(b=>b.onclick=()=>{
@@ -1310,14 +968,14 @@ $('#prod-add').onclick=()=>{
   const name=$('#prod-name').value.trim();
   const cat=$('#prod-cat').value;
   if(!name){showToast('请填写单品名称');return;}
-  if(!draftCompLines.length && !draftLines.length){showToast('请先点「🧩 选择配料」或「📦 添加包材」选择组成单品的内容');return;}
+  if(!draftLines.length){showToast('请先点「🥬 添加食材/包材」选择组成单品的内容');return;}
   const id=(products.reduce((m,x)=>Math.max(m,x.id),0)||0)+1;
   const date=$('#prod-date').value||'';
-  products.push({id,name,cat,lines:draftLines.slice(),compLines:draftCompLines.slice(),price:null,dprice:null,comm:null,scomm:null,
+  products.push({id,name,cat,lines:draftLines.slice(),price:null,dprice:null,comm:null,scomm:null,
     date,status:'active'});
   save();renderProducts();renderShop();
   $('#prod-name').value='';
-  draftCompLines=[];draftLines=[];updateRecipeStatus();
+  draftLines=[];updateRecipeStatus();
 };
 $('#prod-search').oninput=renderProducts;
 
@@ -1349,7 +1007,7 @@ function restoreShop(id){
 }
 /* 单个紧凑行（热销 / 下架 / 分类 三处通用，尺寸统一） */
 function shopRow(p,kind){
-  const meta=`${Math.round(productWeight(p))} g · ${Math.round(productCal(p))} kcal · 脂肪 ${Math.round(productFat(p))} g · 成本 ${yuan(productCost(p))}`;
+  const meta=`${Math.round(productWeight(p))} g · 成本 ${yuan(productCost(p))}`;
   let tag,btns,fire='';
   if(kind==='hot'){
     tag='<span class="tag c3">热销</span>';
@@ -1429,7 +1087,7 @@ function renderOff(){
     const card=document.createElement('div');card.className='card';card.style.marginBottom='10px';
     card.innerHTML=`<div class="prodhead">
       <div class="off-info"><span class="tag c3">已下架</span> <b style="font-size:15px">${p.name}</b>
-        <span class="muted" style="font-size:12px"> · ${p.cat} · ${Math.round(productCal(p))} kcal · 脂肪 ${Math.round(productFat(p))} g · 定价 ${yuan(pPrice(p))}</span></div>
+        <span class="muted" style="font-size:12px"> · ${p.cat} · 定价 ${yuan(pPrice(p))}</span></div>
       <button class="btn ghost sm" data-act="restore" data-id="${p.id}">恢复</button>
     </div>`;
     list.appendChild(card);
@@ -1449,11 +1107,10 @@ function renderBin(){
   $('#bin-empty-msg').style.display=bin.length?'none':'block';
   bin.forEach(item=>{
     const isIng=item.type==='ingredient';
-    const isComp=item.type==='component';
     const name=item.data.name;
     const daysLeft=Math.max(0,7-Math.floor((Date.now()-item.deletedAt)/SEVEN_DAYS));
-    const tagCls=isIng?'c2':isComp?'c4':'c3';
-    const tagTxt=isIng?'食材':isComp?'配料':'单品';
+    const tagCls=isIng?'c2':'c3';
+    const tagTxt=isIng?'食材':'单品';
     const card=document.createElement('div');card.className='card';card.style.marginBottom='10px';
     card.innerHTML=`
       <div class="prodhead">
@@ -1483,12 +1140,6 @@ function restoreItem(id){
     }else{
       ingredients.push({...item.data});
     }
-  }else if(item.type==='component'){
-    if(components.some(x=>x.id===item.data.id)){
-      components.push({...item.data,id:(components.reduce((m,x)=>Math.max(m,x.id),0)||0)+1});
-    }else{
-      components.push({...item.data});
-    }
   }else{
     if(products.some(x=>x.id===item.data.id)){
       products.push({...item.data,id:(products.reduce((m,x)=>Math.max(m,x.id),0)||0)+1});
@@ -1497,7 +1148,7 @@ function restoreItem(id){
     }
   }
   bin=bin.filter(x=>x.id!=id);
-  save();saveBin();renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderComponents();
+  save();saveBin();renderIngredients();renderProducts();renderBin();renderProfit();renderShop();
 }
 function restoreAllBin(){
   if(!bin.length){showToast('回收站已经是空的。');return;}
@@ -1508,12 +1159,6 @@ function restoreAllBin(){
       }else{
         ingredients.push({...item.data});
       }
-    }else if(item.type==='component'){
-      if(components.some(x=>x.id===item.data.id)){
-        components.push({...item.data,id:(components.reduce((m,x)=>Math.max(m,x.id),0)||0)+1});
-      }else{
-        components.push({...item.data});
-      }
     }else{
       if(products.some(x=>x.id===item.data.id)){
         products.push({...item.data,id:(products.reduce((m,x)=>Math.max(m,x.id),0)||0)+1});
@@ -1523,7 +1168,7 @@ function restoreAllBin(){
     }
   });
   bin=[];
-  save();saveBin();renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderComponents();
+  save();saveBin();renderIngredients();renderProducts();renderBin();renderProfit();renderShop();
   showToast(`已恢复全部条目`);
 }
 $('#bin-restore-all').onclick=()=>{
@@ -1636,13 +1281,12 @@ function updateProfitRow(p){
 function doClearAll(){
   const now=Date.now();
   ingredients.forEach(i=>bin.push({id:binId(),type:'ingredient',data:{...i},deletedAt:now}));
-  components.forEach(c=>bin.push({id:binId(),type:'component',data:{...c},deletedAt:now}));
   products.forEach(p=>bin.push({id:binId(),type:'product',data:{...p},deletedAt:now}));
-  ingredients=[];products=[];components=[];draftCompLines=[];draftLines=[];pendingIngType=null;ingTypeChosen=null;
+  ingredients=[];products=[];draftLines=[];pendingIngType=null;ingTypeChosen=null;
   ['dine','del','shan'].forEach(s=>localStorage.removeItem('bakery_'+s+'_meta'));
-  save();saveBin();saveComponents();
+  save();saveBin();
   updateTypeChip();
-  renderIngredients();renderProducts();renderBin();renderProfit();renderComponents();renderShop();renderOff();
+  renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderOff();
   renderDashboard();
   showToast('已全部移入回收站，可恢复；7天后自动清除');
 }
@@ -1686,7 +1330,7 @@ $('#confirm-del-ok').onclick=()=>{
 $('#confirm-del-cancel').onclick=()=>{$('#confirm-del-modal').classList.remove('active');pendingDelId=null;};
 
 /* ---------- 初始化 ---------- */
-renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderOff();renderComponents();updateRecipeStatus();renderPresets();renderTabs();renderDashboard();
+renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderOff();updateRecipeStatus();renderPresets();renderTabs();renderDashboard();
 
 /* ---------- PWA：注册 service worker，支持「添加到主屏幕 / 安装」 ---------- */
 if('serviceWorker' in navigator){
