@@ -326,9 +326,6 @@
     <div class="card">
       <h2><span class="dot"></span>堂食 · 利润</h2>
       <div class="hint">「定价」填你店里卖的价格，成本自动来自配方；利润 = 定价 − 成本，利润率 = 利润 ÷ 定价。直接改表格里的定价即可实时计算。</div>
-      <div class="toolbar" style="align-items:center">
-        <span class="muted">日期：</span><input id="dine-date" type="text" style="width:140px" placeholder="如 2026-08-02">
-      </div>
       <table>
         <thead><tr>
           <th>单品</th><th>分类</th>
@@ -346,9 +343,6 @@
       <div class="toolbar" style="align-items:center">
         <span class="muted">统一扣点：</span>
         <input id="global-comm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%</span>
-      </div>
-      <div class="toolbar" style="align-items:center">
-        <span class="muted">日期：</span><input id="del-date" type="text" style="width:140px" placeholder="如 2026-08-02">
       </div>
       <table>
         <thead><tr>
@@ -368,9 +362,6 @@
       <div class="toolbar" style="align-items:center">
         <span class="muted">统一扣点：</span>
         <input id="global-scomm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%</span>
-      </div>
-      <div class="toolbar" style="align-items:center">
-        <span class="muted">日期：</span><input id="shan-date" type="text" style="width:140px" placeholder="如 2026-08-02">
       </div>
       <table>
         <thead><tr>
@@ -1238,14 +1229,6 @@ function renderProfit(){
   if(document.activeElement!==gc) gc.value='';
   const sc=$('#global-scomm');
   if(document.activeElement!==sc) sc.value='';
-  // 恢复日期（localStorage 持久化）
-  ['dine','del','shan'].forEach(sec=>{
-    const dateEl=$('#'+sec+'-date');
-    const key='bakery_'+sec+'_meta';
-    const meta=JSON.parse(localStorage.getItem(key)||'{}');
-    if(dateEl&&!dateEl.dataset.inited){dateEl.value=meta.date||'';dateEl.dataset.inited='1';
-      dateEl.oninput=()=>{const m=JSON.parse(localStorage.getItem(key)||'{}');m.date=dateEl.value;localStorage.setItem(key,JSON.stringify(m));};}
-  });
 }
 function updateProfitRow(p){
   const cost=productCost(p);
