@@ -341,11 +341,11 @@
     </div>
 
     <div class="card">
-      <h2><span class="dot"></span>利润</h2>
+      <h2><span class="dot"></span>美团</h2>
       <div class="hint">要扣平台服务费（定价 × 扣点）；利润 = 定价 − 平台服务费 − 成本，利润率 = 利润 ÷ 定价。</div>
       <div class="toolbar" style="align-items:center">
         <span class="muted">统一扣点：</span>
-        <input id="global-comm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%（改这里一次性设置所有单品的平台扣点，公式不变）</span>
+        <input id="global-comm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%</span>
       </div>
       <div class="toolbar" style="align-items:center">
         <span class="muted">日期：</span><input id="del-date" type="text" style="width:140px" placeholder="如 2026-08-02">
@@ -363,11 +363,11 @@
     </div>
 
     <div class="card">
-      <h2><span class="dot"></span>利润</h2>
+      <h2><span class="dot"></span>闪购</h2>
       <div class="hint">要扣平台服务费（定价 × 扣点）；利润 = 定价 − 平台服务费 − 成本，利润率 = 利润 ÷ 定价。</div>
       <div class="toolbar" style="align-items:center">
         <span class="muted">统一扣点：</span>
-        <input id="global-scomm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%（改这里一次性设置所有单品的平台扣点，公式不变）</span>
+        <input id="global-scomm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%</span>
       </div>
       <div class="toolbar" style="align-items:center">
         <span class="muted">日期：</span><input id="shan-date" type="text" style="width:140px" placeholder="如 2026-08-02">
@@ -642,7 +642,6 @@ const $=s=>document.querySelector(s);
 const f2=n=>(Math.round((n||0)*100)/100).toFixed(2);
 const yuan=n=>'¥'+f2(n);
 const pct=n=>(Math.round((n||0)*1000)/10).toFixed(1)+'%';
-function marginNote(p,sec){return (p.marginNotes&&p.marginNotes[sec])||'';}
 function autoMarginDine(p){const cost=productCost(p),price=pPrice(p);return price>0?pct((price-cost)/price):'—';}
 function autoMarginDel(p){const cost=productCost(p),dprice=pDprice(p),comm=pComm(p);return dprice>0?pct((dprice-dprice*comm-cost)/dprice):'—';}
 function autoMarginShan(p){const cost=productCost(p),dprice=pDprice(p),scomm=pScomm(p);return dprice>0?pct((dprice-dprice*scomm-cost)/dprice):'—';}
@@ -672,6 +671,10 @@ function pPrice(p){return p.price||0;}                       // 堂食定价
 function pDprice(p){return p.dprice||0;}                     // 外卖定价
 function pComm(p){return (p.comm==null)?0:p.comm;}          // 美团扣点（未填写默认0%）
 function pScomm(p){return (p.scomm==null)?0:p.scomm;}      // 闪购扣点（未填写默认0%）
+function fmtMargin(profit,price){
+  if(!price || price<=0 || profit==null || Number.isNaN(profit)) return '';
+  return (profit/price*100).toFixed(1)+'%';
+}
 /* 食材单位 → 克(或毫升)当量，用于把「每100g/100ml」的营养值换算到实际用量 */
 function massFactor(u){
   if(u==='kg'||u==='L')return 1000;
@@ -1190,42 +1193,40 @@ function renderProfit(){
   products.forEach(p=>{
     const cost=productCost(p);
     // 堂食
+    const dPrice=pPrice(p),dProfit=dPrice-cost;
     const tr=document.createElement('tr');
     tr.innerHTML=`<td><b>${p.name}</b></td><td><span class="tag">${p.cat}</span></td>
       <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="price" value="${p.price||''}"></td>
       <td class="num">${yuan(cost)}</td>
-      <td class="num" id="dine-profit-${p.id}">${yuan(pPrice(p)-cost)}</td>
-      <td class="num"><input class="pinput" type="text" data-id="${p.id}" data-f="margin-dine" value="${marginNote(p,'dine')||''}" placeholder=""></td>`;
+      <td class="num" id="dine-profit-${p.id}">${yuan(dProfit)}</td>
+      <td class="num" id="dine-margin-${p.id}">${fmtMargin(dProfit,dPrice)}</td>`;
     db.appendChild(tr);
     // 美团
+    const mPrice=pDprice(p),mComm=pComm(p),mFee=mPrice*mComm,mProfit=mPrice-mFee-cost;
     const tr2=document.createElement('tr');
     tr2.innerHTML=`<td><b>${p.name}</b></td>
       <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="dprice" value="${p.dprice||''}"></td>
       <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="comm" value="${p.comm||''}"></td>
-      <td class="num" id="del-fee-${p.id}">${yuan(pDprice(p)*pComm(p))}</td>
+      <td class="num" id="del-fee-${p.id}">${yuan(mFee)}</td>
       <td class="num">${yuan(cost)}</td>
-      <td class="num" id="del-profit-${p.id}">${yuan(pDprice(p)-pDprice(p)*pComm(p)-cost)}</td>
-      <td class="num"><input class="pinput" type="text" data-id="${p.id}" data-f="margin-del" value="${marginNote(p,'del')||''}" placeholder=""></td>`;
+      <td class="num" id="del-profit-${p.id}">${yuan(mProfit)}</td>
+      <td class="num" id="del-margin-${p.id}">${fmtMargin(mProfit,mPrice)}</td>`;
     elb.appendChild(tr2);
     // 闪购（复用美团定价 dprice，独立扣点 scomm）
+    const sComm=pScomm(p),sFee=mPrice*sComm,sProfit=mPrice-sFee-cost;
     const tr3=document.createElement('tr');
     tr3.innerHTML=`<td><b>${p.name}</b></td>
       <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="dprice" value="${p.dprice||''}"></td>
       <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="scomm" value="${p.scomm||''}"></td>
-      <td class="num" id="shan-fee-${p.id}">${yuan(pDprice(p)*pScomm(p))}</td>
+      <td class="num" id="shan-fee-${p.id}">${yuan(sFee)}</td>
       <td class="num">${yuan(cost)}</td>
-      <td class="num" id="shan-profit-${p.id}">${yuan(pDprice(p)-pDprice(p)*pScomm(p)-cost)}</td>
-      <td class="num"><input class="pinput" type="text" data-id="${p.id}" data-f="margin-shan" value="${marginNote(p,'shan')||''}" placeholder=""></td>`;
+      <td class="num" id="shan-profit-${p.id}">${yuan(sProfit)}</td>
+      <td class="num" id="shan-margin-${p.id}">${fmtMargin(sProfit,mPrice)}</td>`;
     slb.appendChild(tr3);
   });
   document.querySelectorAll('.pinput').forEach(inp=>inp.oninput=()=>{
     const p=products.find(x=>x.id==+inp.dataset.id);if(!p)return;
     const f=inp.dataset.f;
-    if(f.startsWith('margin-')){
-      p.marginNotes=p.marginNotes||{};
-      p.marginNotes[f.replace('margin-','')]=inp.value;
-      save();return;
-    }
     const raw=inp.value.trim();
     const parsed=parseFloat(raw);
     const v=(raw===''||Number.isNaN(parsed))?null:parsed;
@@ -1249,24 +1250,18 @@ function renderProfit(){
 function updateProfitRow(p){
   const cost=productCost(p);
   const price=pPrice(p),dprice=pDprice(p),comm=pComm(p),scomm=pScomm(p);
-  $('#dine-profit-'+p.id).textContent=yuan(price-cost);
-  $('#del-fee-'+p.id).textContent=yuan(dprice*comm);
-  $('#del-profit-'+p.id).textContent=yuan(dprice-dprice*comm-cost);
+  const dProfit=price-cost;
+  $('#dine-profit-'+p.id).textContent=yuan(dProfit);
+  const dm=$('#dine-margin-'+p.id);if(dm)dm.textContent=fmtMargin(dProfit,price);
+  const mFee=dprice*comm,mProfit=dprice-mFee-cost;
+  $('#del-fee-'+p.id).textContent=yuan(mFee);
+  $('#del-profit-'+p.id).textContent=yuan(mProfit);
+  const dlm=$('#del-margin-'+p.id);if(dlm)dlm.textContent=fmtMargin(mProfit,dprice);
   // 闪购
-  const sf=$('#shan-fee-'+p.id);if(sf)sf.textContent=yuan(dprice*scomm);
-  const sp=$('#shan-profit-'+p.id);if(sp)sp.textContent=yuan(dprice-dprice*scomm-cost);
-  // 利润率：默认空白；仅保留用户手动输入的值
-  const setMargin=(sel,sec)=>{
-    const el=document.querySelector(sel);
-    if(!el)return;
-    if(document.activeElement===el)return; // 正在输入，不覆盖
-    const note=marginNote(p,sec);
-    el.value=(note!=='')?note:'';
-    el.placeholder='';
-  };
-  setMargin(`.pinput[data-id="${p.id}"][data-f="margin-dine"]`,'dine');
-  setMargin(`.pinput[data-id="${p.id}"][data-f="margin-del"]`,'del');
-  setMargin(`.pinput[data-id="${p.id}"][data-f="margin-shan"]`,'shan');
+  const sFee=dprice*scomm,sProfit=dprice-sFee-cost;
+  const sf=$('#shan-fee-'+p.id);if(sf)sf.textContent=yuan(sFee);
+  const sp=$('#shan-profit-'+p.id);if(sp)sp.textContent=yuan(sProfit);
+  const sm=$('#shan-margin-'+p.id);if(sm)sm.textContent=fmtMargin(sProfit,dprice);
 }
 
 /* ---------- 清空全部：所有板块数据移入回收站，7天后自动清除 ---------- */
