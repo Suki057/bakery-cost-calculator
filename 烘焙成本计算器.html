@@ -43,7 +43,6 @@
   .tab{padding:9px 16px;border:1px solid var(--line);background:var(--panel);border-radius:10px;
     cursor:pointer;color:var(--muted);font-weight:600;user-select:none;transition:.15s;touch-action:manipulation}
   .tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
-  .tab.dragging{opacity:.6;transform:scale(1.05);box-shadow:0 6px 18px rgba(0,0,0,.15)}
   .panel{display:none}
   .panel.active{display:block;animation:fade .2s}
   @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -835,10 +834,7 @@ const TAB_LABELS={
   shop:'① 店铺单品', ing:'② 进货清单', prod:'③ 单品配方', comp:'④ 配料成本',
   profit:'⑤ 利润率', bin:'⑥ 回收站', off:'⑦ 产品下架'
 };
-const TAB_ORDER_KEY='bakery_tab_order';
-const DEFAULT_TAB_ORDER=['shop','ing','prod','comp','profit','bin','off'];
-function loadTabOrder(){try{const o=JSON.parse(localStorage.getItem(TAB_ORDER_KEY));return Array.isArray(o)&&o.length?o:DEFAULT_TAB_ORDER;}catch(e){return DEFAULT_TAB_ORDER;}}
-function saveTabOrder(order){localStorage.setItem(TAB_ORDER_KEY,JSON.stringify(order));}
+const TAB_ORDER=['shop','ing','prod','comp','profit','bin','off'];
 
 let currentTab='shop';
 function switchTab(key){
@@ -861,80 +857,23 @@ function switchTab(key){
 }
 
 function renderTabs(){
-  const order=loadTabOrder();
   const container=$('#bottom-tabs');
   container.innerHTML='';
-  order.forEach(key=>{
+  TAB_ORDER.forEach(key=>{
     const el=document.createElement('div');
     el.className='tab'+(key===currentTab?' active':'');
     el.dataset.tab=key;
-    el.draggable=true;
     el.textContent=TAB_LABELS[key];
     container.appendChild(el);
   });
   bindTabEvents();
 }
 
-function getTabOrderFromDOM(){
-  return Array.from($('#bottom-tabs').children).map(el=>el.dataset.tab);
-}
-
 function bindTabEvents(){
   const container=$('#bottom-tabs');
-  let draggedEl=null, touchDragEl=null, touchTimer=null, touchStartX=0, touchStartY=0, hasScrolled=false;
-
-  // 鼠标/桌面拖放排序
   container.querySelectorAll('.tab').forEach(el=>{
-    el.addEventListener('dragstart',e=>{
-      draggedEl=el;el.classList.add('dragging');e.dataTransfer.effectAllowed='move';
-      e.dataTransfer.setData('text/plain',el.dataset.tab);
-    });
-    el.addEventListener('dragend',()=>{
-      if(draggedEl)draggedEl.classList.remove('dragging');
-      draggedEl=null;saveTabOrder(getTabOrderFromDOM());
-    });
     el.addEventListener('click',()=>switchTab(el.dataset.tab));
   });
-  container.addEventListener('dragover',e=>{
-    e.preventDefault();
-    if(!draggedEl)return;
-    const afterEl=getDragAfterElement(container,e.clientX);
-    if(afterEl==null)container.appendChild(draggedEl);else container.insertBefore(draggedEl,afterEl);
-  });
-
-  // 触摸长按拖放排序（短按切换，滑动滚动，长按拖动）
-  container.addEventListener('touchstart',e=>{
-    const t=e.target.closest('.tab');if(!t)return;
-    touchStartX=e.touches[0].clientX;touchStartY=e.touches[0].clientY;hasScrolled=false;
-    touchTimer=setTimeout(()=>{
-      touchDragEl=t;t.classList.add('dragging');if(navigator.vibrate)navigator.vibrate(20);
-    },500);
-  },{passive:true});
-  container.addEventListener('touchmove',e=>{
-    if(touchTimer){clearTimeout(touchTimer);touchTimer=null;}
-    if(touchDragEl){
-      e.preventDefault();
-      const afterEl=getDragAfterElement(container,e.touches[0].clientX);
-      if(afterEl==null)container.appendChild(touchDragEl);else container.insertBefore(touchDragEl,afterEl);
-    }else{
-      const dx=Math.abs(e.touches[0].clientX-touchStartX),dy=Math.abs(e.touches[0].clientY-touchStartY);
-      if(dx>8 || dy>8)hasScrolled=true;
-    }
-  },{passive:false});
-  const endTouch=()=>{
-    if(touchTimer){clearTimeout(touchTimer);touchTimer=null;}
-    if(touchDragEl){touchDragEl.classList.remove('dragging');saveTabOrder(getTabOrderFromDOM());touchDragEl=null;}
-  };
-  container.addEventListener('touchend',endTouch);
-  container.addEventListener('touchcancel',endTouch);
-}
-function getDragAfterElement(container,x){
-  const draggableElements=[...container.querySelectorAll('.tab:not(.dragging)')];
-  return draggableElements.reduce((closest,child)=>{
-    const box=child.getBoundingClientRect();
-    const offset=x-box.left-box.width/2;
-    if(offset<0 && offset>closest.offset){return {offset:offset,element:child};}else{return closest;}
-  },{offset:Number.NEGATIVE_INFINITY}).element;
 }
 
 /* ---------- 顶部概览 ---------- */
