@@ -374,6 +374,25 @@
       </table>
       <div class="empty" id="shan-empty" style="display:none">还没有单品，先到「② 单品配方」添加。</div>
     </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>京东</h2>
+      <div class="hint">要扣平台服务费（定价 × 扣点）；利润 = 定价 − 平台服务费 − 成本，利润率 = 利润 ÷ 定价。</div>
+      <div class="toolbar" style="align-items:center">
+        <span class="muted">统一扣点：</span>
+        <input id="global-jcomm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%</span>
+      </div>
+      <table>
+        <thead><tr>
+          <th>单品</th>
+          <th class="num">定价(元)</th><th class="num">扣点%</th>
+          <th class="num">平台服务费</th><th class="num">单份成本</th>
+          <th class="num">利润</th><th class="num">利润率</th>
+        </tr></thead>
+        <tbody id="jd-body"></tbody>
+      </table>
+      <div class="empty" id="jd-empty" style="display:none">还没有单品，先到「② 单品配方」添加。</div>
+    </div>
   </section>
 
   <!-- ============ 回收站 ============ -->
@@ -517,7 +536,8 @@ function applyPresetData(preset){
     products.push({
       id:newId,name:p.name,cat:p.cat||'其他',date:p.date||'',status:'',
       lines:[...lines,...packLines],price:p.price==null?null:p.price,dprice:p.dprice==null?null:p.dprice,
-      comm:p.comm==null?null:p.comm,scomm:p.scomm==null?null:p.scomm
+      comm:p.comm==null?null:p.comm,scomm:p.scomm==null?null:p.scomm,jprice:p.jprice==null?null:p.jprice,
+      jcomm:p.jcomm==null?null:p.jcomm
     });
     nProd++;
   });
@@ -636,6 +656,7 @@ const pct=n=>(Math.round((n||0)*1000)/10).toFixed(1)+'%';
 function autoMarginDine(p){const cost=productCost(p),price=pPrice(p);return price>0?pct((price-cost)/price):'—';}
 function autoMarginDel(p){const cost=productCost(p),dprice=pDprice(p),comm=pComm(p);return dprice>0?pct((dprice-dprice*comm-cost)/dprice):'—';}
 function autoMarginShan(p){const cost=productCost(p),dprice=pDprice(p),scomm=pScomm(p);return dprice>0?pct((dprice-dprice*scomm-cost)/dprice):'—';}
+function autoMarginJd(p){const cost=productCost(p),jprice=pJprice(p),jcomm=pJcomm(p);return jprice>0?pct((jprice-jprice*jcomm-cost)/jprice):'—';}
 function ingById(id){return ingredients.find(i=>i.id==id);}
 function unitPricePerG(i){                                // 单价(元/g)=进货单价÷单份重量
   if(!i||!(i.qty>0))return 0;
@@ -662,6 +683,8 @@ function pPrice(p){return p.price||0;}                       // 堂食定价
 function pDprice(p){return p.dprice||0;}                     // 外卖定价
 function pComm(p){return (p.comm==null)?0:p.comm;}          // 美团扣点（未填写默认0%）
 function pScomm(p){return (p.scomm==null)?0:p.scomm;}      // 闪购扣点（未填写默认0%）
+function pJprice(p){return p.jprice||0;}                   // 京东定价
+function pJcomm(p){return (p.jcomm==null)?0:p.jcomm;}      // 京东扣点（未填写默认0%）
 function fmtMargin(profit,price){
   if(!price || price<=0 || profit==null || Number.isNaN(profit)) return '';
   return (profit/price*100).toFixed(1)+'%';
@@ -961,7 +984,7 @@ $('#prod-add').onclick=()=>{
   if(!draftLines.length){showToast('请先点「🥬 添加食材/包材」选择组成单品的内容');return;}
   const id=(products.reduce((m,x)=>Math.max(m,x.id),0)||0)+1;
   const date=$('#prod-date').value||'';
-  products.push({id,name,cat,lines:draftLines.slice(),price:null,dprice:null,comm:null,scomm:null,
+  products.push({id,name,cat,lines:draftLines.slice(),price:null,dprice:null,comm:null,scomm:null,jprice:null,jcomm:null,
     date,status:'active'});
   save();renderProducts();renderShop();
   $('#prod-name').value='';
@@ -1173,14 +1196,16 @@ $('#bin-empty').onclick=()=>{
   showToast('回收站已清空');
 };
 
-/* ---------- 利润率（堂食 / 美团 / 闪购） ---------- */
+/* ---------- 利润率（堂食 / 美团 / 闪购 / 京东） ---------- */
 function renderProfit(){
   const db=$('#dine-body');db.innerHTML='';
   const elb=$('#del-body');elb.innerHTML='';
   const slb=$('#shan-body');slb.innerHTML='';
+  const jdb=$('#jd-body');jdb.innerHTML='';
   $('#dine-empty').style.display=products.length?'none':'block';
   $('#del-empty').style.display=products.length?'none':'block';
   $('#shan-empty').style.display=products.length?'none':'block';
+  $('#jd-empty').style.display=products.length?'none':'block';
   products.forEach(p=>{
     const cost=productCost(p);
     // 堂食
@@ -1214,6 +1239,17 @@ function renderProfit(){
       <td class="num" id="shan-profit-${p.id}">${yuan(sProfit)}</td>
       <td class="num" id="shan-margin-${p.id}">${fmtMargin(sProfit,mPrice)}</td>`;
     slb.appendChild(tr3);
+    // 京东（独立定价 jprice，独立扣点 jcomm）
+    const jPrice=pJprice(p),jComm=pJcomm(p),jFee=jPrice*jComm,jProfit=jPrice-jFee-cost;
+    const tr4=document.createElement('tr');
+    tr4.innerHTML=`<td><b>${p.name}</b></td>
+      <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="jprice" value="${p.jprice||''}"></td>
+      <td class="num"><input class="pinput" type="number" min="0" step="any" data-id="${p.id}" data-f="jcomm" value="${p.jcomm||''}"></td>
+      <td class="num" id="jd-fee-${p.id}">${yuan(jFee)}</td>
+      <td class="num">${yuan(cost)}</td>
+      <td class="num" id="jd-profit-${p.id}">${yuan(jProfit)}</td>
+      <td class="num" id="jd-margin-${p.id}">${fmtMargin(jProfit,jPrice)}</td>`;
+    jdb.appendChild(tr4);
   });
   document.querySelectorAll('.pinput').forEach(inp=>inp.oninput=()=>{
     const p=products.find(x=>x.id==+inp.dataset.id);if(!p)return;
@@ -1221,18 +1257,21 @@ function renderProfit(){
     const raw=inp.value.trim();
     const parsed=parseFloat(raw);
     const v=(raw===''||Number.isNaN(parsed))?null:parsed;
-    if(f==='comm'){p.comm=v==null?null:v/100;}else if(f==='scomm'){p.scomm=v==null?null:v/100;}else{p[f]=v;}
+    if(f==='comm'){p.comm=v==null?null:v/100;}else if(f==='scomm'){p.scomm=v==null?null:v/100;}else if(f==='jcomm'){p.jcomm=v==null?null:v/100;}else{p[f]=v;}
     save();updateProfitRow(p);
   });
-  // 美团/闪购统一扣点框默认空白，不预填
+  // 美团/闪购/京东统一扣点框默认空白，不预填
   const gc=$('#global-comm');
   if(document.activeElement!==gc) gc.value='';
   const sc=$('#global-scomm');
   if(document.activeElement!==sc) sc.value='';
+  const jc=$('#global-jcomm');
+  if(document.activeElement!==jc) jc.value='';
 }
 function updateProfitRow(p){
   const cost=productCost(p);
   const price=pPrice(p),dprice=pDprice(p),comm=pComm(p),scomm=pScomm(p);
+  const jprice=pJprice(p),jcomm=pJcomm(p);
   const dProfit=price-cost;
   $('#dine-profit-'+p.id).textContent=yuan(dProfit);
   const dm=$('#dine-margin-'+p.id);if(dm)dm.textContent=fmtMargin(dProfit,price);
@@ -1245,6 +1284,11 @@ function updateProfitRow(p){
   const sf=$('#shan-fee-'+p.id);if(sf)sf.textContent=yuan(sFee);
   const sp=$('#shan-profit-'+p.id);if(sp)sp.textContent=yuan(sProfit);
   const sm=$('#shan-margin-'+p.id);if(sm)sm.textContent=fmtMargin(sProfit,dprice);
+  // 京东
+  const jFee=jprice*jcomm,jProfit=jprice-jFee-cost;
+  const jf=$('#jd-fee-'+p.id);if(jf)jf.textContent=yuan(jFee);
+  const jp=$('#jd-profit-'+p.id);if(jp)jp.textContent=yuan(jProfit);
+  const jm=$('#jd-margin-'+p.id);if(jm)jm.textContent=fmtMargin(jProfit,jprice);
 }
 
 /* ---------- 清空全部：所有板块数据移入回收站，7天后自动清除 ---------- */
@@ -1281,6 +1325,16 @@ $('#global-scomm').oninput=()=>{
   products.forEach(p=>updateProfitRow(p));
   // 同步各行的扣点输入框
   products.forEach(p=>{const ci=document.querySelector(`.pinput[data-id="${p.id}"][data-f="scomm"]`);if(ci)ci.value=(c*100).toFixed(0);});
+};
+
+/* ---------- 京东统一扣点 ---------- */
+$('#global-jcomm').oninput=()=>{
+  const c=parseFloat($('#global-jcomm').value)/100;
+  products.forEach(p=>p.jcomm=c);
+  save();
+  products.forEach(p=>updateProfitRow(p));
+  // 同步各行的扣点输入框
+  products.forEach(p=>{const ci=document.querySelector(`.pinput[data-id="${p.id}"][data-f="jcomm"]`);if(ci)ci.value=(c*100).toFixed(0);});
 };
 
 /* ---------- 数据保存 按钮 ---------- */
