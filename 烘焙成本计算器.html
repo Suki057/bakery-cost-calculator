@@ -226,7 +226,7 @@
     <!-- 数据相关（原数据保存，置后） -->
     <div class="card">
       <h2><span class="dot"></span>数据相关</h2>
-      <div class="hint">点击「导出保存」把软件内的全部数据导出成文件；点击「导入恢复」选择文件合并数据。「公式1」「公式2」可按截图表格格式一键导入。下方「预设数据」可一键导入示例数据包。</div>
+      <div class="hint">点击「导出保存」把软件内的全部数据导出成文件；点击「导入恢复」选择文件合并数据（仅支持本软件「导出保存」生成的备份文件）。</div>
 
       <!-- 预设数据卡片 -->
       <div id="preset-list" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
@@ -236,7 +236,6 @@
       <div class="row" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
         <button class="btn primary" id="btn-export">⬇ 导出保存</button>
         <button class="btn" id="btn-import">⬆ 导入恢复</button>
-        <button class="btn ghost" id="btn-formula1">🧮 公式1：截图表格导入</button>
         <input type="file" id="file-import" accept="application/json,.json" style="display:none">
       </div>
       <div class="hint" id="io-info" style="margin-top:8px"></div>
@@ -548,43 +547,6 @@
   </div>
 </div>
 
-<!-- ============ 公式1：截图表格导入弹窗 ============ -->
-<div class="modal" id="formula1-modal">
-  <div class="modal-box" style="width:min(640px,100%)">
-    <div class="modal-head">
-      <span>🧮 公式1：截图表格导入</span>
-      <span class="delx" id="formula1-close" title="关闭">✕</span>
-    </div>
-    <div class="modal-body">
-      <div class="hint" style="margin-bottom:10px">
-        粘贴符合「公式1」格式的 JSON 数据（食材清单 + 包材清单 + 单品配方）。系统会自动计算均价并导入进货清单与单品配方。
-      </div>
-      <textarea id="formula1-text" style="width:100%;min-height:220px;border:1px solid var(--line);border-radius:10px;padding:10px;font-family:monospace;font-size:16px" placeholder='{"ingredients":[...],"packs":[...],"products":[...]}'></textarea>
-      <div class="hint" style="margin-top:8px">示例文件已保存在本地 <code>formula1-example.json</code>，可复制其中内容粘贴。</div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn ghost" id="formula1-cancel">取消</button>
-      <button class="btn primary" id="formula1-ok">导入</button>
-    </div>
-  </div>
-</div>
-
-<!-- ============ 导入恢复：公式选择弹窗 ============ -->
-<div class="modal" id="formula-choice-modal">
-  <div class="modal-box" style="width:min(360px,100%)">
-    <div class="modal-head">
-      <span>选择导入公式</span>
-      <span class="delx" id="formula-choice-close" title="关闭">✕</span>
-    </div>
-    <div class="modal-body">
-      <div class="hint" style="margin-bottom:14px;text-align:center">检测到表格数据，请选择对应的公式进行自动测算导入。</div>
-      <div style="display:flex;flex-direction:column;gap:12px">
-        <button class="btn primary" id="choice-formula1" style="padding:16px 12px;font-size:15px">🧮 公式1：截图表格导入</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script>
@@ -593,38 +555,7 @@
 
 
 /* ---------- 预设数据包（可一键导入） ---------- */
-const PRESETS=[
-  {
-    id:'fastfood',
-    name:'🍱 快餐便当数据',
-    desc:'5种食材 + 3种包材 + 2个单品（香煎鸡胸肉时蔬盖饭、鸡胸肉蔬菜蛋炒饭）',
-    ingredients:[
-      {name:'大米',       qty:500,  unit:'g',  cost:3.8,   kj:1450, fat:0.8, type:'food'},
-      {name:'新鲜鸡胸肉', qty:1000, unit:'g',  cost:11,    kj:480,  fat:1.6, type:'food'},
-      {name:'鸡蛋',       qty:1000, unit:'g',  cost:14,    kj:590,  fat:8.8, type:'food'},
-      {name:'上海青',     qty:500,  unit:'g',  cost:3.5,   kj:85,   fat:0.2, type:'food'},
-      {name:'胡萝卜',     qty:500,  unit:'g',  cost:3.2,   kj:155,  fat:0.3, type:'food'}
-    ],
-    packs:[
-      {name:'圆形外卖餐盒', qty:50,  unit:'个', cost:25, type:'pack'},
-      {name:'一次性筷子套装',qty:100, unit:'套', cost:18, type:'pack'},
-      {name:'打包手提袋',   qty:200, unit:'袋', cost:16, type:'pack'}
-    ],
-    products:[
-      {
-        name:'香煎鸡胸肉时蔬盖饭', cat:'主食', date:'2026-08',
-        lines:[{ingName:'大米',qty:170},{ingName:'新鲜鸡胸肉',qty:120},{ingName:'胡萝卜',qty:40},{ingName:'上海青',qty:60},{ingName:'鸡蛋',qty:50}],
-        packLines:[{pkName:'圆形外卖餐盒',qty:1},{pkName:'一次性筷子套装',qty:1},{pkName:'打包手提袋',qty:1}],
-        price:22, dprice:20, comm:15, scomm:12
-      },
-      {
-        name:'鸡胸肉蔬菜蛋炒饭', cat:'主食', date:'2026-08',
-        lines:[{ingName:'大米',qty:115},{ingName:'新鲜鸡胸肉',qty:70},{ingName:'鸡蛋',qty:50},{ingName:'胡萝卜',qty:35},{ingName:'上海青',qty:45}],
-        packLines:[{pkName:'圆形外卖餐盒',qty:1},{pkName:'一次性筷子套装',qty:1},{pkName:'打包手提袋',qty:1}],
-        price:18, dprice:16, comm:13, scomm:10
-      }
-    ]
-  }
+const PRESETS=[  // 当前无内置预设数据
 ];
 
 /* 应用预设数据到当前仓库（核心逻辑，生成新ID避免冲突） */
@@ -688,64 +619,6 @@ function importPreset(presetId){
   const compInfo=res.nComp?` + ${res.nComp} 种配料` : '';
   $('#io-info').textContent=`已导入预设「${res.name}」：${res.nIng} 种食材 + ${res.nPack} 种包材${compInfo} + ${res.nProd} 个单品`;
   showToast(`已导入「${res.name}」`);
-}
-
-/* ---------- 公式1：截图表格自动导入规则 ---------- */
-const FORMULA1_SCHEMA={
-  id:'formula1',
-  name:'公式1：食材+包材+单品表格',
-  desc:'适用于「食材清单 + 包材清单 + 单品配方」三区域截图/表格',
-  version:1,
-  fields:{
-    ingredient:['name','unitCost','weight','kj','fat'],
-    pack:['name','unitCost','count'],
-    product:['name','ingredients','packs']
-  }
-};
-
-/* 把符合公式1的原始数据转换成标准预设结构 */
-function buildFormula1Preset(raw){
-  const ingredients=(raw.ingredients||[]).map(it=>({
-    name:it.name, qty:Number(it.weight)||0, unit:'g',
-    cost:Number(it.unitCost)||0,
-    kj:Number(it.kj)||0, fat:Number(it.fat)||0,
-    type:'food'
-  }));
-  const packs=(raw.packs||[]).map(it=>({
-    name:it.name, qty:Number(it.count)||0, unit:'个',
-    cost:Number(it.unitCost)||0,
-    kj:0, fat:0, type:'pack'
-  }));
-  const products=(raw.products||[]).map(p=>({
-    name:p.name, cat:p.cat||'其他', date:p.date||'',
-    lines:(p.ingredients||[]).map(x=>({ingName:x.name, qty:Number(x.qty)||0})),
-    packLines:(p.packs||[]).map(x=>({pkName:x.name, qty:Number(x.qty)||0})),
-    price:p.price==null?null:Number(p.price), dprice:p.dprice==null?null:Number(p.dprice),
-    comm:p.comm==null?null:Number(p.comm), scomm:p.scomm==null?null:Number(p.scomm)
-  }));
-  return {id:'formula1', name:'公式1导入数据', desc:'', ingredients, packs, products};
-}
-
-/* 解析公式1文本：支持 JSON */
-function parseFormula1(text){
-  text=(text||'').trim();
-  if(!text) throw new Error('请输入数据');
-  if(text.startsWith('{') || text.startsWith('[')){
-    try{
-      const obj=JSON.parse(text);
-      return Array.isArray(obj)?{ingredients:obj}:obj;
-    }catch(e){throw new Error('JSON 格式错误：'+e.message);}
-  }
-  throw new Error('目前公式1只支持 JSON 格式，请按示例粘贴');
-}
-
-/* 导入公式1数据（主入口） */
-function importFormula1(text){
-  const raw=parseFormula1(text);
-  const preset=buildFormula1Preset(raw);
-  const res=applyPresetData(preset);
-  $('#io-info').textContent=`公式1导入完成：${res.nIng} 种食材 + ${res.nPack} 种包材 + ${res.nProd} 个单品`;
-  showToast('公式1数据已导入');
 }
 
 /* 渲染预设卡片 */
@@ -837,9 +710,8 @@ function importData(file){
       doMergeImport(data);
       return;
     }
-    // 公式数据：先暂存文本，弹出选择窗让用户选公式1/公式2
-    window.pendingImportText=reader.result;
-    $('#formula-choice-modal').classList.add('active');
+    // 非备份文件（无法识别）
+    showToast('文件格式无法识别，请使用「导出保存」生成的备份文件');
   };
   reader.onerror=()=>showToast('读取文件失败');
   reader.readAsText(file);
@@ -1729,26 +1601,9 @@ $('#global-scomm').oninput=()=>{
 };
 
 /* ---------- 数据保存 按钮 ---------- */
-window.pendingImportText='';
 $('#btn-export').onclick=exportData;
 $('#btn-import').onclick=()=>$('#file-import').click();
 $('#file-import').onchange=e=>{const f=e.target.files[0];if(f)importData(f);e.target.value='';};
-
-/* ---------- 导入恢复：公式选择弹窗 ---------- */
-$('#formula-choice-close').onclick=()=>{$('#formula-choice-modal').classList.remove('active');window.pendingImportText='';};
-$('#choice-formula1').onclick=()=>{
-  try{importFormula1(window.pendingImportText);}
-  catch(e){showToast(e.message);}
-  $('#formula-choice-modal').classList.remove('active');window.pendingImportText='';
-};
-
-/* ---------- 公式1导入按钮 ---------- */
-$('#btn-formula1').onclick=()=>{$('#formula1-text').value='';$('#formula1-modal').classList.add('active');};
-$('#formula1-close').onclick=$('#formula1-cancel').onclick=()=>$('#formula1-modal').classList.remove('active');
-$('#formula1-ok').onclick=()=>{
-  try{importFormula1($('#formula1-text').value);$('#formula1-modal').classList.remove('active');}
-  catch(e){showToast(e.message);}
-};
 
 /* ---------- 删除确认弹窗 ---------- */
 let pendingDelId=null;
