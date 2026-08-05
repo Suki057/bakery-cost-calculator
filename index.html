@@ -21,7 +21,7 @@
   }
   *{box-sizing:border-box}
   *{-webkit-text-size-adjust:100%;text-size-adjust:100%}
-  .tab,.btn,button,summary,label,[role="button"]{touch-action:manipulation}
+  .tab,.btn,button,summary,label,[role="button"],input,select,textarea{touch-action:manipulation}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
     background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55}
   header{background:linear-gradient(120deg,#f6c177,#e8a04b);color:#3a2f25;padding:18px 24px;
@@ -51,7 +51,7 @@
   input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;
     background:#fff;color:var(--ink);font-size:14px;font-family:inherit}
   input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand)}
-  @media(max-width:720px){input,select,textarea{font-size:16px}}
+  @media (pointer: coarse){input,select,textarea{font-size:16px}}
   .row{display:grid;gap:10px;align-items:end;margin-bottom:10px}
   .btn{padding:9px 16px;border:none;border-radius:10px;background:var(--brand);color:#fff;
     font-weight:600;cursor:pointer;font-size:13px;transition:.15s;font-family:inherit}
