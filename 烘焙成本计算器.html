@@ -24,16 +24,26 @@
   .tab,.btn,button,summary,label,[role="button"],input,select,textarea{touch-action:manipulation}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
     background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55}
-  header{background:linear-gradient(120deg,#f6c177,#e8a04b);color:#3a2f25;padding:18px 24px;
+  header{position:sticky;top:0;z-index:30;background:linear-gradient(120deg,#f6c177,#e8a04b);color:#3a2f25;padding:14px 18px;
     box-shadow:var(--shadow);display:flex;align-items:center;gap:12px}
-  header h1{font-size:19px;margin:0;font-weight:700}
+  header h1{font-size:18px;margin:0;font-weight:700}
   header .sub{font-size:12px;opacity:.8}
   .spacer{flex:1}
-  .wrap{max-width:1080px;margin:0 auto;padding:20px 18px 60px}
-  .tabs{display:flex;gap:8px;margin:6px 0 18px;flex-wrap:wrap}
+  .hero{background:linear-gradient(120deg,#f6c177,#e8a04b);color:#3a2f25;padding:22px 18px 28px;text-align:center}
+  .hero-title{font-size:20px;font-weight:800;margin-bottom:14px;letter-spacing:.5px}
+  .hero-stats{display:flex;justify-content:center;gap:32px}
+  .stat{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .stat-num{font-size:28px;font-weight:800;line-height:1;text-shadow:0 1px 0 rgba(255,255,255,.3)}
+  .stat-label{font-size:12px;opacity:.9;font-weight:600}
+  .wrap{max-width:1080px;margin:0 auto;padding:14px 18px calc(92px + env(safe-area-inset-bottom))}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap}
+  .bottom-tabs{position:fixed;bottom:0;left:0;right:0;margin:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line);overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;z-index:40;scrollbar-width:none}
+  .bottom-tabs::-webkit-scrollbar{display:none}
+  .bottom-tabs .tab{flex:0 0 auto;white-space:nowrap;padding:10px 14px;font-size:13px}
   .tab{padding:9px 16px;border:1px solid var(--line);background:var(--panel);border-radius:10px;
-    cursor:pointer;color:var(--muted);font-weight:600;user-select:none;transition:.15s}
+    cursor:pointer;color:var(--muted);font-weight:600;user-select:none;transition:.15s;touch-action:manipulation}
   .tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .tab.dragging{opacity:.6;transform:scale(1.05);box-shadow:0 6px 18px rgba(0,0,0,.15)}
   .panel{display:none}
   .panel.active{display:block;animation:fade .2s}
   @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -193,16 +203,16 @@
   <button class="btn danger sm" id="clear-all"><span class="green-dot"></span>清空全部数据</button>
 </header>
 
-<div class="wrap">
-  <div class="tabs">
-    <div class="tab active" data-tab="shop">① 店铺单品</div>
-    <div class="tab" data-tab="ing">② 进货清单</div>
-    <div class="tab" data-tab="prod">③ 单品配方</div>
-    <div class="tab" data-tab="comp">④ 配料成本</div>
-    <div class="tab" data-tab="profit">⑤ 利润率</div>
-    <div class="tab" data-tab="bin">⑥ 回收站</div>
-    <div class="tab" data-tab="off">⑦ 产品下架</div>
+<section class="hero">
+  <div class="hero-title">今日概览</div>
+  <div class="hero-stats">
+    <div class="stat"><span class="stat-num" id="dash-products">0</span><span class="stat-label">在售单品</span></div>
+    <div class="stat"><span class="stat-num" id="dash-ingredients">0</span><span class="stat-label">食材/包材</span></div>
+    <div class="stat"><span class="stat-num" id="dash-components">0</span><span class="stat-label">配料</span></div>
   </div>
+</section>
+
+<div class="wrap">
 
   <!-- ============ 店铺单品 ============ -->
   <section class="panel active" id="panel-shop">
@@ -428,6 +438,16 @@
     </div>
   </section>
 </div>
+
+<nav class="tabs bottom-tabs" id="bottom-tabs">
+  <div class="tab active" data-tab="shop">① 店铺单品</div>
+  <div class="tab" data-tab="ing">② 进货清单</div>
+  <div class="tab" data-tab="prod">③ 单品配方</div>
+  <div class="tab" data-tab="comp">④ 配料成本</div>
+  <div class="tab" data-tab="profit">⑤ 利润率</div>
+  <div class="tab" data-tab="bin">⑥ 回收站</div>
+  <div class="tab" data-tab="off">⑦ 产品下架</div>
+</nav>
 
 <!-- ============ 配方弹窗 ============ -->
 <div class="modal" id="comp-modal">
@@ -810,18 +830,122 @@ function showToast(msg){
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
 }
 
-/* ---------- Tab 切换 ---------- */
-document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+/* ---------- Tab 切换 + 底部可拖动导航 ---------- */
+const TAB_LABELS={
+  shop:'① 店铺单品', ing:'② 进货清单', prod:'③ 单品配方', comp:'④ 配料成本',
+  profit:'⑤ 利润率', bin:'⑥ 回收站', off:'⑦ 产品下架'
+};
+const TAB_ORDER_KEY='bakery_tab_order';
+const DEFAULT_TAB_ORDER=['shop','ing','prod','comp','profit','bin','off'];
+function loadTabOrder(){try{const o=JSON.parse(localStorage.getItem(TAB_ORDER_KEY));return Array.isArray(o)&&o.length?o:DEFAULT_TAB_ORDER;}catch(e){return DEFAULT_TAB_ORDER;}}
+function saveTabOrder(order){localStorage.setItem(TAB_ORDER_KEY,JSON.stringify(order));}
+
+let currentTab='shop';
+function switchTab(key){
+  currentTab=key;
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-  t.classList.add('active');
-  $('#panel-'+t.dataset.tab).classList.add('active');
-  if(t.dataset.tab==='profit')renderProfit();
-  if(t.dataset.tab==='bin')renderBin();
-  if(t.dataset.tab==='shop')renderShop();
-  if(t.dataset.tab==='off')renderOff();
-  if(t.dataset.tab==='comp')renderComponents();
-});
+  const tabEl=$('#bottom-tabs .tab[data-tab="'+key+'"]');
+  if(tabEl)tabEl.classList.add('active');
+  const panel=$('#panel-'+key);
+  if(panel)panel.classList.add('active');
+  if(key==='profit')renderProfit();
+  if(key==='bin')renderBin();
+  if(key==='shop')renderShop();
+  if(key==='off')renderOff();
+  if(key==='comp')renderComponents();
+  // 滚动到底部导航栏让当前 tab 可见
+  if(tabEl && tabEl.scrollIntoView){
+    tabEl.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+  }
+}
+
+function renderTabs(){
+  const order=loadTabOrder();
+  const container=$('#bottom-tabs');
+  container.innerHTML='';
+  order.forEach(key=>{
+    const el=document.createElement('div');
+    el.className='tab'+(key===currentTab?' active':'');
+    el.dataset.tab=key;
+    el.draggable=true;
+    el.textContent=TAB_LABELS[key];
+    container.appendChild(el);
+  });
+  bindTabEvents();
+}
+
+function getTabOrderFromDOM(){
+  return Array.from($('#bottom-tabs').children).map(el=>el.dataset.tab);
+}
+
+function bindTabEvents(){
+  const container=$('#bottom-tabs');
+  let draggedEl=null, touchDragEl=null, touchTimer=null, touchStartX=0, touchStartY=0, hasScrolled=false;
+
+  // 鼠标/桌面拖放排序
+  container.querySelectorAll('.tab').forEach(el=>{
+    el.addEventListener('dragstart',e=>{
+      draggedEl=el;el.classList.add('dragging');e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain',el.dataset.tab);
+    });
+    el.addEventListener('dragend',()=>{
+      if(draggedEl)draggedEl.classList.remove('dragging');
+      draggedEl=null;saveTabOrder(getTabOrderFromDOM());
+    });
+    el.addEventListener('click',()=>switchTab(el.dataset.tab));
+  });
+  container.addEventListener('dragover',e=>{
+    e.preventDefault();
+    if(!draggedEl)return;
+    const afterEl=getDragAfterElement(container,e.clientX);
+    if(afterEl==null)container.appendChild(draggedEl);else container.insertBefore(draggedEl,afterEl);
+  });
+
+  // 触摸长按拖放排序（短按切换，滑动滚动，长按拖动）
+  container.addEventListener('touchstart',e=>{
+    const t=e.target.closest('.tab');if(!t)return;
+    touchStartX=e.touches[0].clientX;touchStartY=e.touches[0].clientY;hasScrolled=false;
+    touchTimer=setTimeout(()=>{
+      touchDragEl=t;t.classList.add('dragging');if(navigator.vibrate)navigator.vibrate(20);
+    },500);
+  },{passive:true});
+  container.addEventListener('touchmove',e=>{
+    if(touchTimer){clearTimeout(touchTimer);touchTimer=null;}
+    if(touchDragEl){
+      e.preventDefault();
+      const afterEl=getDragAfterElement(container,e.touches[0].clientX);
+      if(afterEl==null)container.appendChild(touchDragEl);else container.insertBefore(touchDragEl,afterEl);
+    }else{
+      const dx=Math.abs(e.touches[0].clientX-touchStartX),dy=Math.abs(e.touches[0].clientY-touchStartY);
+      if(dx>8 || dy>8)hasScrolled=true;
+    }
+  },{passive:false});
+  const endTouch=()=>{
+    if(touchTimer){clearTimeout(touchTimer);touchTimer=null;}
+    if(touchDragEl){touchDragEl.classList.remove('dragging');saveTabOrder(getTabOrderFromDOM());touchDragEl=null;}
+  };
+  container.addEventListener('touchend',endTouch);
+  container.addEventListener('touchcancel',endTouch);
+}
+function getDragAfterElement(container,x){
+  const draggableElements=[...container.querySelectorAll('.tab:not(.dragging)')];
+  return draggableElements.reduce((closest,child)=>{
+    const box=child.getBoundingClientRect();
+    const offset=x-box.left-box.width/2;
+    if(offset<0 && offset>closest.offset){return {offset:offset,element:child};}else{return closest;}
+  },{offset:Number.NEGATIVE_INFINITY}).element;
+}
+
+/* ---------- 顶部概览 ---------- */
+function renderDashboard(){
+  const onSale=products.filter(p=>p.status!=='off').length;
+  const ingCount=ingredients.length;
+  const compCount=components.length;
+  $('#dash-products').textContent=onSale;
+  $('#dash-ingredients').textContent=ingCount;
+  $('#dash-components').textContent=compCount;
+}
 
 /* ---------- 食材库 ---------- */
 function renderIngredients(){
@@ -847,6 +971,7 @@ function renderIngredients(){
   };
   food.forEach(i=>tbF.appendChild(mkRow(i, true)));
   pack.forEach(i=>tbP.appendChild(mkRow(i, false)));
+  renderDashboard();
 }
 $('#ing-add').onclick=()=>{
   if(pendingIngType===null){showToast('请先点「食材/包材名称」框选择分类（食材 / 包材）');return;}
@@ -1094,6 +1219,7 @@ function renderComponents(){
       showToast(`已删除「${c.name}」`);
     };
   });
+  renderDashboard();
 }
 /* ---------- 新建配料配比：弹窗内填写食材与用量 ---------- */
 let compDraft=[];        // 弹窗里正在编辑的该配料配比食材行
@@ -1239,6 +1365,7 @@ function renderProducts(){
       deleteProduct(p);
     };
   });
+  renderDashboard();
 }
 $('#prod-add').onclick=()=>{
   const name=$('#prod-name').value.trim();
@@ -1350,6 +1477,7 @@ function renderShop(){
       if(dx<=-40){openConfirm();}
     });
   });
+  renderDashboard();
 }
 
 /* ---------- 产品下架（保留不删，可恢复） ---------- */
@@ -1372,6 +1500,7 @@ function renderOff(){
     p.status='active';save();renderShop();renderOff();
     showToast(`「${p.name}」已恢复在售`);
   });
+  renderDashboard();
 }
 
 /* ---------- 回收站 ---------- */
@@ -1575,6 +1704,7 @@ function doClearAll(){
   save();saveBin();saveComponents();
   updateTypeChip();
   renderIngredients();renderProducts();renderBin();renderProfit();renderComponents();renderShop();renderOff();
+  renderDashboard();
   showToast('已全部移入回收站，可恢复；7天后自动清除');
 }
 $('#clear-all').onclick=()=>{$('#confirm-clear-modal').classList.add('active');};
@@ -1617,7 +1747,7 @@ $('#confirm-del-ok').onclick=()=>{
 $('#confirm-del-cancel').onclick=()=>{$('#confirm-del-modal').classList.remove('active');pendingDelId=null;};
 
 /* ---------- 初始化 ---------- */
-renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderOff();renderComponents();updateRecipeStatus();renderPresets();
+renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderOff();renderComponents();updateRecipeStatus();renderPresets();renderTabs();renderDashboard();
 
 /* ---------- PWA：注册 service worker，支持「添加到主屏幕 / 安装」 ---------- */
 if('serviceWorker' in navigator){
