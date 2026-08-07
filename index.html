@@ -176,13 +176,13 @@
   .modal-foot.between{justify-content:space-between}
   .modal-lines{margin-bottom:12px}
   .modal-cal{margin:10px 0 4px;font-size:13px;color:#444;background:#f6f8fa;padding:8px 10px;border-radius:8px}
-  .modal-line{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:9px 11px;
+  .modal-line{display:grid;grid-template-columns:auto 1fr 168px;align-items:center;gap:10px;padding:9px 11px;
     background:#fcf8f1;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px}
   .modal-line .ingpick{justify-self:center;align-self:center}
   .modal-line .ing-name-label{display:flex;align-items:center;cursor:pointer;min-width:0;overflow:hidden}
   .modal-line .ing-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .modal-line .qty-group{display:flex;align-items:center;gap:8px;white-space:nowrap;justify-content:flex-end}
-  .modal-line .ingqty{width:60px;text-align:right}
+  .modal-line .ingqty{width:104px;text-align:right}
   .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(8px);
     background:#3a2f25;color:#fff;padding:10px 18px;border-radius:24px;font-size:13px;
     box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:99;opacity:0;transition:.25s;pointer-events:none}
@@ -348,9 +348,13 @@
       <div class="empty" id="dine-empty" style="display:none">还没有单品，先到「② 单品配方」添加。</div>
     </div>
 
+    <div style="margin:16px 0 8px">
+      <div style="font-size:18px;font-weight:800;color:var(--ink);margin-bottom:4px">外卖平台</div>
+      <div class="hint" style="margin:0">要扣平台服务费（定价 × 扣点）；利润 = 定价 − 平台服务费 − 成本，利润率 = 利润 ÷ 定价。</div>
+    </div>
+
     <div class="card">
       <h2><span class="dot"></span>美团</h2>
-      <div class="hint">要扣平台服务费（定价 × 扣点）；利润 = 定价 − 平台服务费 − 成本，利润率 = 利润 ÷ 定价。</div>
       <div class="toolbar" style="align-items:center">
         <span class="muted">统一扣点：</span>
         <input id="global-comm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%</span>
@@ -369,7 +373,6 @@
 
     <div class="card">
       <h2><span class="dot"></span>闪购</h2>
-      <div class="hint">要扣平台服务费（定价 × 扣点）；利润 = 定价 − 平台服务费 − 成本，利润率 = 利润 ÷ 定价。</div>
       <div class="toolbar" style="align-items:center">
         <span class="muted">统一扣点：</span>
         <input id="global-scomm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%</span>
@@ -388,7 +391,6 @@
 
     <div class="card">
       <h2><span class="dot"></span>京东</h2>
-      <div class="hint">要扣平台服务费（定价 × 扣点）；利润 = 定价 − 平台服务费 − 成本，利润率 = 利润 ÷ 定价。</div>
       <div class="toolbar" style="align-items:center">
         <span class="muted">统一扣点：</span>
         <input id="global-jcomm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%</span>
