@@ -176,14 +176,13 @@
   .modal-foot.between{justify-content:space-between}
   .modal-lines{margin-bottom:12px}
   .modal-cal{margin:10px 0 4px;font-size:13px;color:#444;background:#f6f8fa;padding:8px 10px;border-radius:8px}
-  .modal-line{display:flex;justify-content:flex-start;align-items:center;gap:10px;padding:9px 11px;
-    background:#fcf8f1;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;
-    flex-wrap:nowrap;overflow-x:auto}
-  .modal-line .ln-label{display:flex;align-items:center;gap:8px;flex:0 0 auto;cursor:pointer}
-  .modal-line .ing-name{font-weight:600;white-space:nowrap}
-  .modal-line .ing-price{white-space:nowrap;font-size:12px}
-  .modal-line .qty-group{display:flex;align-items:center;gap:8px;white-space:nowrap;flex:0 0 auto}
-  .modal-line .ingqty{width:72px;text-align:right}
+  .modal-line{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;padding:9px 11px;
+    background:#fcf8f1;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px}
+  .modal-line .ln-label{display:flex;align-items:center;gap:8px;cursor:pointer;min-width:0;overflow:hidden}
+  .modal-line .ing-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .modal-line .ing-price{white-space:nowrap;font-size:12px;text-align:center}
+  .modal-line .qty-group{display:flex;align-items:center;gap:8px;white-space:nowrap;justify-content:flex-end}
+  .modal-line .ingqty{width:60px;text-align:right}
   .modal-line .ing-subtotal{white-space:nowrap;font-size:12px;min-width:56px;text-align:right;color:var(--brand-d);font-weight:600}
   .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(8px);
     background:#3a2f25;color:#fff;padding:10px 18px;border-radius:24px;font-size:13px;
@@ -918,8 +917,8 @@ function openIngModal(target){
       div.innerHTML=`<label class="ln-label">
           <input type="checkbox" class="ingpick" data-id="${i.id}" ${qty>0?'checked':''}>
           <span class="ing-name">${i.name}</span>
-          <span class="ing-price muted">${fmtPrice(i.cost/i.qty)} 元/${i.unit}</span>
         </label>
+        <span class="ing-price muted">${fmtPrice(i.cost/i.qty)} 元/${i.unit}</span>
         <span class="qty-group"><span class="muted">用量</span>
         <input type="number" min="0" step="0.01" value="${initialQty.toFixed(2)}" class="ingqty" data-id="${i.id}" ${qty>0?'':'disabled'}>
         <span class="ing-subtotal" data-id="${i.id}">¥${fmtCost(lineCost({ingId:i.id,qty:initialQty}))}</span></span>`;
@@ -998,7 +997,7 @@ function renderProducts(){
         <div class="pcname"><b style="font-size:15px">${p.name}</b> <span class="tag">${p.cat}</span></div>
         <button class="btn danger sm" data-act="del" data-id="${p.id}">删除</button>
       </div>
-      <div class="pcinfo">单份成本 ${yuan(productCost(p))} · 共 ${productIngredientCount(p)} 项食材</div>
+      <div class="pcinfo">克重 ${Math.round(productWeight(p))} g · 成本 ¥${fmtCost(productCost(p))}${pPrice(p)>0?' · 定价 '+yuan(pPrice(p)):''}</div>
       ${ingHtml}`;
     list.appendChild(card);
 
@@ -1080,7 +1079,7 @@ function restoreShop(id){
 }
 /* 单个紧凑行（热销 / 下架 / 分类 三处通用，尺寸统一） */
 function shopRow(p,kind){
-  const meta=`${Math.round(productWeight(p))} g · 成本 ${yuan(productCost(p))}`;
+  const meta=`${Math.round(productWeight(p))} g · 成本 ¥${fmtCost(productCost(p))}${pPrice(p)>0?' · 定价 '+yuan(pPrice(p)):''}`;
   let tag,btns,fire='';
   if(kind==='hot'){
     tag='<span class="tag c3">热销</span>';
@@ -1160,7 +1159,7 @@ function renderOff(){
     const card=document.createElement('div');card.className='card';card.style.marginBottom='10px';
     card.innerHTML=`<div class="prodhead">
       <div class="off-info"><span class="tag c3">已下架</span> <b style="font-size:15px">${p.name}</b>
-        <span class="muted" style="font-size:12px"> · ${p.cat} · 定价 ${yuan(pPrice(p))}</span></div>
+        <span class="muted" style="font-size:12px"> · ${p.cat} · 成本 ¥${fmtCost(productCost(p))} · 定价 ${yuan(pPrice(p))}</span></div>
       <button class="btn ghost sm" data-act="restore" data-id="${p.id}">恢复</button>
     </div>`;
     list.appendChild(card);
