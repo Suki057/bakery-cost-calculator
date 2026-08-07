@@ -176,10 +176,15 @@
   .modal-foot.between{justify-content:space-between}
   .modal-lines{margin-bottom:12px}
   .modal-cal{margin:10px 0 4px;font-size:13px;color:#444;background:#f6f8fa;padding:8px 10px;border-radius:8px}
-  .modal-line{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:9px 11px;
-    background:#fcf8f1;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px}
-  .modal-line .ln-label{flex:1;display:flex;align-items:center;gap:8px;min-width:0}
-  .modal-line .qty-group{display:flex;align-items:center;gap:12px;white-space:nowrap;flex:0 0 auto}
+  .modal-line{display:flex;justify-content:flex-start;align-items:center;gap:10px;padding:9px 11px;
+    background:#fcf8f1;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;
+    flex-wrap:nowrap;overflow-x:auto}
+  .modal-line .ln-label{display:flex;align-items:center;gap:8px;flex:0 0 auto;cursor:pointer}
+  .modal-line .ing-name{font-weight:600;white-space:nowrap}
+  .modal-line .ing-price{white-space:nowrap;font-size:12px}
+  .modal-line .qty-group{display:flex;align-items:center;gap:8px;white-space:nowrap;flex:0 0 auto}
+  .modal-line .ingqty{width:72px;text-align:right}
+  .modal-line .ing-subtotal{white-space:nowrap;font-size:12px;min-width:56px;text-align:right;color:var(--brand-d);font-weight:600}
   .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(8px);
     background:#3a2f25;color:#fff;padding:10px 18px;border-radius:24px;font-size:13px;
     box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:99;opacity:0;transition:.25s;pointer-events:none}
@@ -304,10 +309,12 @@
       <div class="grid cols-2" style="margin-top:10px">
         <div><label>单品名称</label><input id="prod-name" placeholder="如：原味舒芙蕾"></div>
         <div><label>分类</label>
-          <select id="prod-cat">
-            <option>热压三明治</option><option>奶茶柠檬茶</option><option selected>舒芙蕾</option>
-            <option>燕麦雪饼</option><option>其他</option>
-          </select>
+          <select id="prod-cat"></select>
+          <div id="prod-cat-custom" style="display:none;gap:8px;align-items:center;margin-top:6px">
+            <input id="prod-cat-new" placeholder="输入新分类" style="flex:1">
+            <button class="btn sm" id="prod-cat-save">保存</button>
+            <button class="btn ghost sm" id="prod-cat-cancel">取消</button>
+          </div>
         </div>
       </div>
       <div style="display:flex;gap:10px;margin-top:10px;align-items:flex-end">
@@ -846,6 +853,47 @@ $('#ing-type-ok').onclick=()=>{
 /* ---------- 单品配方：选择食材/包材（弹窗） ---------- */
 let draftLines=[];       // 新建单品时，弹窗里已选的食材/包材（尚未提交）
 
+/* ---------- 单品分类管理（支持「其他」输入新分类） ---------- */
+const DEFAULT_CATS=['舒芙蕾','三明治','燕麦雪饼','奶茶','柠檬茶','铜锣烧','其他'];
+let cats=loadCats();
+function loadCats(){
+  try{ const s=localStorage.getItem('bakery_cats'); return s?JSON.parse(s):DEFAULT_CATS.slice(); }
+  catch(e){ return DEFAULT_CATS.slice(); }
+}
+function saveCats(){ localStorage.setItem('bakery_cats',JSON.stringify(cats)); }
+function renderCatSelect(){
+  const sel=$('#prod-cat'); if(!sel) return;
+  sel.innerHTML='';
+  cats.forEach(c=>{ const opt=document.createElement('option'); opt.value=c; opt.textContent=c; sel.appendChild(opt); });
+  sel.value='舒芙蕾';
+}
+$('#prod-cat').onchange=()=>{
+  if($('#prod-cat').value==='其他'){
+    $('#prod-cat').style.display='none';
+    $('#prod-cat-custom').style.display='flex';
+    $('#prod-cat-new').value='';
+    $('#prod-cat-new').focus();
+  }
+};
+$('#prod-cat-save').onclick=()=>{
+  const v=$('#prod-cat-new').value.trim();
+  if(!v){showToast('请输入分类名称');return;}
+  if(!cats.includes(v)){
+    const idx=cats.indexOf('其他');
+    if(idx>=0) cats.splice(idx,0,v); else cats.push(v);
+    saveCats();
+  }
+  renderCatSelect();
+  $('#prod-cat').value=v;
+  $('#prod-cat').style.display='block';
+  $('#prod-cat-custom').style.display='none';
+};
+$('#prod-cat-cancel').onclick=()=>{
+  $('#prod-cat').style.display='block';
+  $('#prod-cat-custom').style.display='none';
+  $('#prod-cat').value='舒芙蕾';
+};
+
 /* 食材/包材选择弹窗：列出所有食材与包材，勾选并设置用量 */
 let ingModalTarget=null;
 function openIngModal(target){
@@ -866,15 +914,21 @@ function openIngModal(target){
     list.forEach(i=>{
       const qty=map.get(String(i.id))||0;
       const div=document.createElement('div');div.className='modal-line';
-      div.innerHTML=`<label class="ln-label" style="cursor:pointer">
+      const initialQty=qty>0?qty:1;
+      div.innerHTML=`<label class="ln-label">
           <input type="checkbox" class="ingpick" data-id="${i.id}" ${qty>0?'checked':''}>
-          <span><b>${i.name}</b> <span class="muted">${fmtPrice(unitPricePerG(i))} 元/g · ${i.unit}</span></span>
+          <span class="ing-name">${i.name}</span>
+          <span class="ing-price muted">${fmtPrice(i.cost/i.qty)} 元/${i.unit}</span>
         </label>
         <span class="qty-group"><span class="muted">用量</span>
-        <input type="number" min="0" step="any" value="${qty>0?qty:1}" class="ingqty" data-id="${i.id}" style="width:72px" ${qty>0?'':'disabled'}></span>`;
+        <input type="number" min="0" step="0.01" value="${initialQty.toFixed(2)}" class="ingqty" data-id="${i.id}" ${qty>0?'':'disabled'}>
+        <span class="ing-subtotal" data-id="${i.id}">¥${fmtCost(lineCost({ingId:i.id,qty:initialQty}))}</span></span>`;
       const chk=div.querySelector('.ingpick');
       const qin=div.querySelector('.ingqty');
-      chk.onchange=()=>{ qin.disabled=!chk.checked; if(chk.checked && !qin.value) qin.value=1; };
+      const sub=div.querySelector('.ing-subtotal');
+      function updateSub(){ sub.textContent='¥'+fmtCost(lineCost({ingId:i.id,qty:parseFloat(qin.value)||0})); }
+      chk.onchange=()=>{ qin.disabled=!chk.checked; if(chk.checked && !qin.value){ qin.value='1.00'; updateSub(); } };
+      qin.oninput=updateSub;
       box.appendChild(div);
     });
   }
@@ -886,8 +940,8 @@ $('#ing-modal-save').onclick=()=>{
   document.querySelectorAll('#ing-modal-lines .ingpick').forEach(chk=>{
     if(chk.checked){
       const id=+chk.dataset.id;
-      const q=parseFloat(document.querySelector(`#ing-modal-lines .ingqty[data-id="${id}"]`).value)||1;
-      picks.push({ingId:id,qty:q>0?q:1});
+      const q=parseFloat(document.querySelector(`#ing-modal-lines .ingqty[data-id="${id}"]`).value)||0;
+      picks.push({ingId:id,qty:q});
     }
   });
   if(ingModalTarget.type==='product'){
@@ -1007,7 +1061,7 @@ function deleteProduct(p){
 }
 
 /* ---------- 店铺单品（热销 / 下架 / 各分类 三个板块） ---------- */
-const CAT_ORDER=['热压三明治','奶茶柠檬茶','舒芙蕾','燕麦雪饼','其他'];
+const CAT_ORDER=['舒芙蕾','三明治','燕麦雪饼','奶茶','柠檬茶','铜锣烧','其他'];
 function setHot(id,on){
   const p=products.find(x=>x.id==id);if(!p)return;
   p.status=on?'hot':'active';
@@ -1360,7 +1414,7 @@ $('#confirm-del-ok').onclick=()=>{
 $('#confirm-del-cancel').onclick=()=>{$('#confirm-del-modal').classList.remove('active');pendingDelId=null;};
 
 /* ---------- 初始化 ---------- */
-renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderOff();updateRecipeStatus();renderPresets();renderTabs();renderDashboard();
+renderCatSelect();renderIngredients();renderProducts();renderBin();renderProfit();renderShop();renderOff();updateRecipeStatus();renderPresets();renderTabs();renderDashboard();
 
 /* ---------- PWA：注册 service worker，支持「添加到主屏幕 / 安装」 ---------- */
 if('serviceWorker' in navigator){
