@@ -124,6 +124,13 @@
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   .search{flex:1;min-width:180px}
   .pinput{width:96px !important;text-align:right;display:inline-block}
+  /* 利润率板块：表头不换行、输入框对齐、窄扣点框、横向滚动 */
+  .profit-wrap{overflow-x:auto;margin:0 -18px;padding:0 18px;-webkit-overflow-scrolling:touch}
+  .profit-wrap > table{width:auto;min-width:100%}
+  .profit-wrap th,.profit-wrap td{white-space:nowrap;vertical-align:middle}
+  .profit-wrap .price-head,.profit-wrap .comm-head{text-align:left}
+  .profit-wrap .pinput[data-f="price"],.profit-wrap .pinput[data-f="dprice"],.profit-wrap .pinput[data-f="jprice"]{width:78px !important;text-align:left;padding-left:8px}
+  .profit-wrap .pinput[data-f="comm"],.profit-wrap .pinput[data-f="scomm"],.profit-wrap .pinput[data-f="jcomm"]{width:52px !important;text-align:left;padding-left:8px}
   .tinput{width:92px;border:1px solid var(--line);border-radius:8px;padding:4px 8px;
     font-size:16px;font-weight:800;color:var(--brand-d);text-align:right;
     font-variant-numeric:tabular-nums;background:#fff;font-family:inherit}
@@ -326,14 +333,14 @@
     <div class="card">
       <h2><span class="dot"></span>堂食 · 利润</h2>
       <div class="hint">「定价」填你店里卖的价格，成本自动来自配方；利润 = 定价 − 成本，利润率 = 利润 ÷ 定价。直接改表格里的定价即可实时计算。</div>
-      <table>
+      <div class="profit-wrap"><table class="profit-table">
         <thead><tr>
           <th>单品</th><th>分类</th>
-          <th class="num">定价(元)</th><th class="num">单份成本</th>
+          <th class="num price-head">定价(元)</th><th class="num">单份成本</th>
           <th class="num">利润</th><th class="num">利润率</th>
         </tr></thead>
         <tbody id="dine-body"></tbody>
-      </table>
+      </table></div>
       <div class="empty" id="dine-empty" style="display:none">还没有单品，先到「② 单品配方」添加。</div>
     </div>
 
@@ -344,15 +351,15 @@
         <span class="muted">统一扣点：</span>
         <input id="global-comm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%</span>
       </div>
-      <table>
+      <div class="profit-wrap"><table class="profit-table">
         <thead><tr>
           <th>单品</th>
-          <th class="num">定价(元)</th><th class="num">扣点%</th>
+          <th class="num price-head">定价(元)</th><th class="num comm-head">扣点%</th>
           <th class="num">平台服务费</th><th class="num">单份成本</th>
           <th class="num">利润</th><th class="num">利润率</th>
         </tr></thead>
         <tbody id="del-body"></tbody>
-      </table>
+      </table></div>
       <div class="empty" id="del-empty" style="display:none">还没有单品，先到「② 单品配方」添加。</div>
     </div>
 
@@ -363,15 +370,15 @@
         <span class="muted">统一扣点：</span>
         <input id="global-scomm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%</span>
       </div>
-      <table>
+      <div class="profit-wrap"><table class="profit-table">
         <thead><tr>
           <th>单品</th>
-          <th class="num">定价(元)</th><th class="num">扣点%</th>
+          <th class="num price-head">定价(元)</th><th class="num comm-head">扣点%</th>
           <th class="num">平台服务费</th><th class="num">单份成本</th>
           <th class="num">利润</th><th class="num">利润率</th>
         </tr></thead>
         <tbody id="shan-body"></tbody>
-      </table>
+      </table></div>
       <div class="empty" id="shan-empty" style="display:none">还没有单品，先到「② 单品配方」添加。</div>
     </div>
 
@@ -382,15 +389,15 @@
         <span class="muted">统一扣点：</span>
         <input id="global-jcomm" type="number" min="0" step="any" style="width:84px"> <span class="muted">%</span>
       </div>
-      <table>
+      <div class="profit-wrap"><table class="profit-table">
         <thead><tr>
           <th>单品</th>
-          <th class="num">定价(元)</th><th class="num">扣点%</th>
+          <th class="num price-head">定价(元)</th><th class="num comm-head">扣点%</th>
           <th class="num">平台服务费</th><th class="num">单份成本</th>
           <th class="num">利润</th><th class="num">利润率</th>
         </tr></thead>
         <tbody id="jd-body"></tbody>
-      </table>
+      </table></div>
       <div class="empty" id="jd-empty" style="display:none">还没有单品，先到「② 单品配方」添加。</div>
     </div>
   </section>
